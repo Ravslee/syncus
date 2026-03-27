@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "624748504557",
+    "project_id": "syncusapp",
+    "storage_bucket": "syncusapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624748504557:android:9e7d22c18cb17af53173e4",
+        "android_client_info": {
+          "package_name": "com.syncus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "624748504557-e853ri1lnmr0ua5cor1u999scrt8ld88.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmNnHigzZVaCqpCFKK_S-A_WlkWJhnvmk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "624748504557-e853ri1lnmr0ua5cor1u999scrt8ld88.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
