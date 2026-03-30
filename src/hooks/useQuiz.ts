@@ -2,15 +2,15 @@
 // SyncUs - Quiz Hook
 // ============================================================
 
-import {useCallback} from 'react';
-import {useAppStore} from '../store/useAppStore';
+import { useCallback } from 'react';
+import { useAppStore } from '../store/useAppStore';
 import {
   submitAnswer,
   updateProgress,
   markCompleted,
   batchSubmitAnswers,
 } from '../services/quizService';
-import {Answer} from '../types';
+import { Answer } from '../types';
 
 export const useQuiz = (roomId: string) => {
   const {
@@ -54,12 +54,16 @@ export const useQuiz = (roomId: string) => {
           userId: user.uid,
           questionId,
           selectedOption: option,
+          createdAt: Date.now(),
         }));
 
         await batchSubmitAnswers(allAnswers);
 
         // Mark user as completed
         await markCompleted(roomId, user.uid);
+
+        // Progress index to trigger navigation
+        nextQuestion();
       } else {
         // Update progress
         const nextIndex = currentQuestionIndex + 1;

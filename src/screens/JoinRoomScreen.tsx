@@ -20,7 +20,7 @@ type Props = {
 };
 
 export const JoinRoomScreen: React.FC<Props> = ({ navigation }) => {
-  const { user } = useAppStore();
+  const { user, resetQuiz } = useAppStore();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +37,7 @@ export const JoinRoomScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     setLoading(true);
+    resetQuiz();
     try {
       const room = await joinRoom(joinCode, user.uid);
       navigation.replace('WaitingRoom', { roomId: room.id, roomCode: room.code });

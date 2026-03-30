@@ -24,6 +24,7 @@ export interface User {
   displayName: string;
   createdAt?: number;
   lastLoginAt?: number;
+  photoURL?: string;
 }
 
 export interface Room {
@@ -65,6 +66,7 @@ export interface Answer {
   userId: string;
   questionId: string;
   selectedOption: number;
+  createdAt: number;
 }
 
 export interface QuestionBreakdown {
@@ -83,6 +85,7 @@ export interface Result {
   calculatedAt: number;
   users: string[];
   categoryId: string;
+  createdAt: number;
 }
 
 // --- Navigation Types ---
@@ -94,11 +97,11 @@ export type RootStackParamList = {
   Home: undefined;
   CreateRoom: undefined;
   JoinRoom: undefined;
-  WaitingRoom: {roomId: string; roomCode: string};
-  CategorySelection: {roomId: string};
-  Quiz: {roomId: string; categoryId: string};
-  Result: {roomId: string};
-  Summary: {roomId: string};
+  WaitingRoom: { roomId: string; roomCode: string };
+  CategorySelection: { roomId: string };
+  Quiz: { roomId: string; categoryId: string };
+  Result: { roomId: string };
+  Summary: { roomId: string };
   History: undefined;
 };
 

@@ -51,12 +51,6 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
     extrapolate: 'clamp',
   });
 
-  const displayPercentage = animatedValue.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 100],
-    extrapolate: 'clamp',
-  });
-
   return (
     <View style={[styles.container, {width: size, height: size}]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -84,7 +78,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </Svg>
       <View style={styles.center}>
-        <AnimatedText value={displayPercentage} />
+        <AnimatedText value={animatedValue} />
         {label && <Text style={styles.label}>{label}</Text>}
       </View>
     </View>
@@ -92,20 +86,17 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
 };
 
 // Helper to display animated percentage text
-const AnimatedText: React.FC<{value: Animated.AnimatedInterpolation<number>}> = ({
+const AnimatedText: React.FC<{value: Animated.Value}> = ({
   value,
 }) => {
   const [displayText, setDisplayText] = React.useState('0');
-  const listenerId = useRef<string | null>(null);
 
   useEffect(() => {
-    listenerId.current = value.addListener(({value: v}) => {
+    const id = value.addListener(({value: v}) => {
       setDisplayText(Math.round(v).toString());
     });
     return () => {
-      if (listenerId.current) {
-        value.removeListener(listenerId.current);
-      }
+      value.removeListener(id);
     };
   }, [value]);
 

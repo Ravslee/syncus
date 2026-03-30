@@ -2,17 +2,19 @@
 // SyncUs - Category Selection Screen
 // ============================================================
 
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RouteProp} from '@react-navigation/native';
+import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import {ScreenWrapper} from '../components/ScreenWrapper';
 import {GradientButton} from '../components/GradientButton';
 import {CategoryCard} from '../components/CategoryCard';
 import {Colors, Typography, Spacing} from '../constants/theme';
-import {RootStackParamList, Category} from '../types';
+import {RootStackParamList, Category, UserRoomStatus} from '../types';
 import {CATEGORIES} from '../constants';
 import {updateRoomCategory} from '../services/roomService';
+import {useAppStore} from '../store/useAppStore';
+import {db} from '../services/firebase';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CategorySelection'>;
@@ -24,8 +26,26 @@ export const CategorySelectionScreen: React.FC<Props> = ({
   route,
 }) => {
   const {roomId} = route.params;
+  const {user, resetQuiz} = useAppStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Reset quiz state when returning to this screen for a new quiz
+  useFocusEffect(
+    useCallback(() => {
+      resetQuiz();
+      
+      // Update local state in Firestore so partner knows we are waiting for a new quiz
+      if (user) {
+        const stateId = `${roomId}__${user.uid}`;
+        db.roomStates().doc(stateId).update({
+          status: UserRoomStatus.JOINED,
+          currentQuestionIndex: 0,
+          completedAt: null,
+        }).catch((err: any) => console.error('Failed to reset room state:', err));
+      }
+    }, [user, roomId, resetQuiz])
+  );
 
   const handleSelect = (category: Category) => {
     setSelectedCategory(category);

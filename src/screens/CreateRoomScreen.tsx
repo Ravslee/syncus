@@ -18,7 +18,7 @@ type Props = {
 };
 
 export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
-  const { user } = useAppStore();
+  const { user, resetQuiz } = useAppStore();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,7 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
   // Create room on mount
   useEffect(() => {
     const initRoom = async () => {
+      resetQuiz();
       if (!user) {
         return;
       }

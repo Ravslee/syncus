@@ -27,11 +27,23 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
 
   const [user1Id, user2Id] = users;
 
-  // Fetch answers for both users
-  const [user1Answers, user2Answers] = await Promise.all([
+  // Fetch answers for both users with retry for Firestore eventual consistency
+  let [user1Answers, user2Answers] = await Promise.all([
     fetchUserAnswers(roomId, user1Id),
     fetchUserAnswers(roomId, user2Id),
   ]);
+
+  let retries = 0;
+  while ((user1Answers.length === 0 || user2Answers.length === 0) && retries < 5) {
+    await new Promise<void>(resolve => setTimeout(resolve, 1000));
+    const [u1, u2] = await Promise.all([
+      fetchUserAnswers(roomId, user1Id),
+      fetchUserAnswers(roomId, user2Id),
+    ]);
+    user1Answers = u1;
+    user2Answers = u2;
+    retries++;
+  }
 
   // Build answer maps keyed by questionId
   const user1Map = new Map(
@@ -87,6 +99,7 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
     calculatedAt: Date.now(),
     users,
     categoryId: roomData?.categoryId ?? '',
+    createdAt: Date.now(),
   };
 
   return result;
@@ -100,7 +113,6 @@ export const saveResults = async (
   result: Result,
 ): Promise<void> => {
   await db.results().doc(roomId).set(result);
-  await updateRoomStatus(roomId, RoomStatus.COMPLETED);
 };
 
 /**
@@ -126,5 +138,5 @@ export const fetchHistory = async (userId: string): Promise<Result[]> => {
     .limit(20)
     .get();
 
-  return snapshot.docs.map(doc => doc.data() as Result);
+  return snapshot.docs.map((doc: any) => doc.data() as Result);
 };
