@@ -94,11 +94,11 @@ export type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
   Onboarding: undefined;
+  Lobby: undefined;
   Home: undefined;
   CreateRoom: undefined;
   JoinRoom: undefined;
   WaitingRoom: { roomId: string; roomCode: string };
-  CategorySelection: { roomId: string };
   Quiz: { roomId: string; categoryId: string };
   Result: { roomId: string };
   Summary: { roomId: string };

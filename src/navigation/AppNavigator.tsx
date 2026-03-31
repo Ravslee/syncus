@@ -14,12 +14,11 @@ import {LoginScreen} from '../screens/LoginScreen';
 import {SignUpScreen} from '../screens/SignUpScreen';
 import {OnboardingScreen} from '../screens/OnboardingScreen';
 
-// Main Screens
+import {LobbyScreen} from '../screens/LobbyScreen';
 import {HomeScreen} from '../screens/HomeScreen';
 import {CreateRoomScreen} from '../screens/CreateRoomScreen';
 import {JoinRoomScreen} from '../screens/JoinRoomScreen';
 import {WaitingRoomScreen} from '../screens/WaitingRoomScreen';
-import {CategorySelectionScreen} from '../screens/CategorySelectionScreen';
 import {QuizScreen} from '../screens/QuizScreen';
 import {ResultScreen} from '../screens/ResultScreen';
 import {SummaryScreen} from '../screens/SummaryScreen';
@@ -58,14 +57,11 @@ export const AppNavigator: React.FC = () => {
       ) : (
         // --- Main App Flow ---
         <>
+          <Stack.Screen name="Lobby" component={LobbyScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="CreateRoom" component={CreateRoomScreen} />
           <Stack.Screen name="JoinRoom" component={JoinRoomScreen} />
           <Stack.Screen name="WaitingRoom" component={WaitingRoomScreen} />
-          <Stack.Screen
-            name="CategorySelection"
-            component={CategorySelectionScreen}
-          />
           <Stack.Screen name="Quiz" component={QuizScreen} />
           <Stack.Screen name="Result" component={ResultScreen} />
           <Stack.Screen name="Summary" component={SummaryScreen} />

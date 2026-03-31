@@ -2,15 +2,19 @@
 // SyncUs - Home Screen
 // ============================================================
 
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import React, {useState, useCallback} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
 import {ScreenWrapper} from '../components/ScreenWrapper';
 import {GradientButton} from '../components/GradientButton';
-import {GlassCard} from '../components/GlassCard';
+import {CategoryCard} from '../components/CategoryCard';
 import {Colors, Typography, Spacing, Shadows} from '../constants/theme';
-import {RootStackParamList} from '../types';
+import {RootStackParamList, Category, UserRoomStatus} from '../types';
+import {CATEGORIES} from '../constants';
+import {updateRoomCategory} from '../services/roomService';
 import {useAppStore} from '../store/useAppStore';
+import {db} from '../services/firebase';
 import {signOut} from '../services/authService';
 
 type Props = {
@@ -18,7 +22,67 @@ type Props = {
 };
 
 export const HomeScreen: React.FC<Props> = ({navigation}) => {
-  const {user} = useAppStore();
+  const {user, room, resetQuiz} = useAppStore();
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [partnerName, setPartnerName] = useState<string>('your partner');
+
+  // Fetch partner name
+  React.useEffect(() => {
+    const fetchPartner = async () => {
+      if (!room || !user) return;
+      const partnerId = room.users.find(id => id !== user.uid);
+      if (partnerId) {
+        try {
+          const pDoc = await db.users().doc(partnerId).get();
+          if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
+            setPartnerName(pDoc.data()?.displayName ?? 'your partner');
+          }
+        } catch (e) {
+          console.error('Failed to fetch partner:', e);
+        }
+      }
+    };
+    fetchPartner();
+  }, [room, user]);
+
+  // Reset quiz state when returning to this screen for a new quiz
+  useFocusEffect(
+    useCallback(() => {
+      resetQuiz();
+      
+      // Update local state in Firestore so partner knows we are waiting
+      if (user && room) {
+        const stateId = `${room.id}__${user.uid}`;
+        db.roomStates().doc(stateId).update({
+          status: UserRoomStatus.JOINED,
+          currentQuestionIndex: 0,
+          completedAt: null,
+        }).catch(err => console.error('Failed to reset room state:', err));
+      }
+    }, [user, room, resetQuiz])
+  );
+
+  const handleSelect = (category: Category) => {
+    setSelectedCategory(category);
+  };
+
+  const handleStart = async () => {
+    if (!selectedCategory || !room) {
+      if (!room) Alert.alert('Error', 'You must be in a room to start.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateRoomCategory(room.id, selectedCategory.id);
+      navigation.navigate('Quiz', {roomId: room.id, categoryId: selectedCategory.id});
+    } catch (error) {
+      console.error('Failed to set category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScreenWrapper scrollable>
@@ -28,77 +92,42 @@ export const HomeScreen: React.FC<Props> = ({navigation}) => {
           <Text style={styles.greeting}>
             Hey, {user?.displayName ?? 'there'} 👋
           </Text>
-          <Text style={styles.appBadge}>SyncUs</Text>
+          <Text style={styles.appBadge}>SyncUs Room</Text>
         </View>
-        <TouchableOpacity
-          onPress={signOut}
-          style={styles.profileButton}>
+        <TouchableOpacity onPress={signOut} style={styles.profileButton}>
           <Text style={styles.profileInitial}>
             {user?.displayName?.charAt(0).toUpperCase() ?? '?'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Hero Section */}
-      <View style={styles.hero}>
-        <Text style={styles.heroTitle}>
-          Discover how well{'\n'}you{' '}
-          <Text style={styles.heroHighlight}>sync</Text>
+      <View style={styles.container}>
+        <Text style={styles.badge}>CHOOSE A VIBE</Text>
+        <Text style={styles.title}>What's the topic?</Text>
+        <Text style={styles.subtitle}>
+          You are paired with <Text style={styles.partnerName}>{partnerName}</Text>. Select a category to start your daily sync!
         </Text>
-        <Text style={styles.heroSubtitle}>
-          Connect with your partner and find the{'\n'}perfect match through
-          shared quizzes and insights
-        </Text>
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <GradientButton
-          title="Create Room"
-          onPress={() => navigation.navigate('CreateRoom')}
-          size="lg"
-          style={styles.actionButton}
-          icon={<Text style={styles.actionIcon}>🔗</Text>}
-        />
-        <GradientButton
-          title="Join Room"
-          onPress={() => navigation.navigate('JoinRoom')}
-          variant="secondary"
-          size="lg"
-          style={styles.actionButton}
-          icon={<Text style={styles.actionIcon}>🎯</Text>}
-        />
-      </View>
-
-      {/* Your Sync Status */}
-      <GlassCard style={styles.statsCard} variant="elevated">
-        <Text style={styles.statsTitle}>● Your Sync Status</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>—</Text>
-            <Text style={styles.statLabel}>Total Syncs</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>—</Text>
-            <Text style={styles.statLabel}>Avg Score</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>—</Text>
-            <Text style={styles.statLabel}>Best Score</Text>
-          </View>
+        {/* Category Grid */}
+        <View style={styles.grid}>
+          {CATEGORIES.map(category => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onPress={handleSelect}
+              selected={selectedCategory?.id === category.id}
+            />
+          ))}
         </View>
-      </GlassCard>
 
-      {/* Quick Links */}
-      <View style={styles.quickLinks}>
-        <TouchableOpacity
-          style={styles.quickLink}
-          onPress={() => navigation.navigate('History')}>
-          <Text style={styles.quickLinkIcon}>📊</Text>
-          <Text style={styles.quickLinkText}>Quiz History</Text>
-        </TouchableOpacity>
+        <GradientButton
+          title="Start Quiz 🚀"
+          onPress={handleStart}
+          disabled={!selectedCategory}
+          loading={loading}
+          size="lg"
+          style={styles.continueButton}
+        />
       </View>
     </ScreenWrapper>
   );
@@ -110,7 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: Spacing.base,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   greeting: {
     fontSize: Typography.fontSize.base,
@@ -136,85 +165,40 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.white,
   },
-  hero: {
-    marginBottom: Spacing['2xl'],
+  container: {
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing['3xl'],
   },
-  heroTitle: {
-    fontSize: Typography.fontSize['3xl'],
+  badge: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: '700',
+    color: Colors.primary,
+    letterSpacing: 2,
+    marginBottom: Spacing.sm,
+  },
+  title: {
+    fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
     color: Colors.white,
-    lineHeight: 44,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  heroHighlight: {
-    color: Colors.primary,
-  },
-  heroSubtitle: {
+  subtitle: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
+    marginBottom: Spacing['2xl'],
     lineHeight: 22,
   },
-  actions: {
-    gap: Spacing.md,
-    marginBottom: Spacing['2xl'],
+  partnerName: {
+    color: Colors.primaryLight,
+    fontWeight: '700',
   },
-  actionButton: {
-    width: '100%',
-  },
-  actionIcon: {
-    fontSize: 18,
-  },
-  statsCard: {
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: Spacing.xl,
   },
-  statsTitle: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
-    color: Colors.textAccent,
-    marginBottom: Spacing.base,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: '800',
-    color: Colors.white,
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: Colors.divider,
-  },
-  quickLinks: {
-    marginBottom: Spacing['3xl'],
-  },
-  quickLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-  },
-  quickLinkIcon: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  quickLinkText: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.white,
-    fontWeight: '600',
+  continueButton: {
+    width: '100%',
   },
 });

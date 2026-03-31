@@ -54,7 +54,7 @@ export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
   };
 
   const handlePlayAgain = () => {
-    navigation.replace('CategorySelection', { roomId: route.params.roomId });
+    navigation.navigate('Home');
   };
 
   return (

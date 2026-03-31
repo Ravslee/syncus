@@ -28,7 +28,7 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     if (room && room.users.length === 2 && room.status === RoomStatus.ACTIVE) {
       const timer = setTimeout(() => {
-        navigation.replace('CategorySelection', { roomId });
+        navigation.replace('Home');
       }, 2000); // Small delay for UX
       return () => clearTimeout(timer);
     }

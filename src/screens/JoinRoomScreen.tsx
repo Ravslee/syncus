@@ -55,9 +55,9 @@ export const JoinRoomScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.icon}>🔮</Text>
         </View>
 
-        <Text style={styles.title}>Enter the Portal</Text>
+        <Text style={styles.title}>Join a Room</Text>
         <Text style={styles.subtitle}>
-          Your partner is waiting. Input the 5-character sync code to begin your compatibility journey.
+          Enter the 5-character room code to connect with your partner and start syncing.
         </Text>
 
         <GlassCard style={styles.card} variant="elevated">
