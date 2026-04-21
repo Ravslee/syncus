@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },

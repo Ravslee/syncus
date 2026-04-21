@@ -23,15 +23,7 @@ export const useResults = (roomId: string) => {
     setLoading(true);
     setError(null);
     try {
-      // Check if results already exist
-      const existing = await fetchResults(roomId);
-      if (existing) {
-        setResults(existing);
-        setLoading(false);
-        return;
-      }
-
-      // Calculate fresh results
+      // Always calculate fresh results to avoid seeing stale ones from previous rounds
       const result = await calculateResults(roomId);
       await saveResults(roomId, result);
       setResults(result);

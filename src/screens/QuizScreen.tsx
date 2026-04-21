@@ -2,35 +2,35 @@
 // SyncUs - Quiz Screen
 // ============================================================
 
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RouteProp} from '@react-navigation/native';
-import {ScreenWrapper} from '../components/ScreenWrapper';
-import {QuestionCard} from '../components/QuestionCard';
-import {PartnerStatusOverlay} from '../components/PartnerStatusOverlay';
-import {GradientButton} from '../components/GradientButton';
-import {Colors, Typography, Spacing, BorderRadius} from '../constants/theme';
-import {RootStackParamList, UserRoomStatus} from '../types';
-import {useAppStore} from '../store/useAppStore';
-import {useQuiz} from '../hooks/useQuiz';
-import {usePartnerStatus} from '../hooks/usePartnerStatus';
-import {fetchQuestions} from '../services/quizService';
-import {CATEGORIES} from '../constants';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { QuestionCard } from '../components/QuestionCard';
+import { PartnerStatusOverlay } from '../components/PartnerStatusOverlay';
+import { GradientButton } from '../components/GradientButton';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { RootStackParamList, UserRoomStatus } from '../types';
+import { useAppStore } from '../store/useAppStore';
+import { useQuiz } from '../hooks/useQuiz';
+import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { fetchQuestions } from '../services/quizService';
+import { CATEGORIES } from '../constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
   route: RouteProp<RootStackParamList, 'Quiz'>;
 };
 
-export const QuizScreen: React.FC<Props> = ({navigation, route}) => {
-  const {roomId, categoryId} = route.params;
-  const {setQuestions, questions} = useAppStore();
+export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { roomId, categoryId } = route.params;
+  const { setQuestions, questions } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +44,7 @@ export const QuizScreen: React.FC<Props> = ({navigation, route}) => {
     handleAnswer,
   } = useQuiz(roomId);
 
-  const {partnerStatus} = usePartnerStatus(roomId);
+  const { partnerStatus } = usePartnerStatus(roomId);
 
   const category = CATEGORIES.find(c => c.id === categoryId);
 
@@ -70,7 +70,7 @@ export const QuizScreen: React.FC<Props> = ({navigation, route}) => {
       totalQuestions > 0 &&
       !loading
     ) {
-      navigation.replace('Result', {roomId});
+      navigation.replace('Result', { roomId });
     }
   }, [currentQuestionIndex, totalQuestions, loading, roomId, navigation]);
 
@@ -122,7 +122,7 @@ export const QuizScreen: React.FC<Props> = ({navigation, route}) => {
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
               <View
-                style={[styles.progressFill, {width: `${progress * 100}%`}]}
+                style={[styles.progressFill, { width: `${progress * 100}%` }]}
               />
             </View>
             <Text style={styles.progressText}>
@@ -150,7 +150,7 @@ export const QuizScreen: React.FC<Props> = ({navigation, route}) => {
               option={option}
               index={index}
               selected={selectedOption === index}
-              onPress={submitting ? () => {} : onOptionSelect}
+              onPress={submitting ? () => { } : onOptionSelect}
             />
           ))}
         </View>
@@ -173,9 +173,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     marginTop: Spacing.base,
+    fontFamily: Typography.fontFamily.regular,
   },
   header: {
     marginBottom: Spacing.xl,
+    fontFamily: Typography.fontFamily.bold,
   },
   categoryBadge: {
     flexDirection: 'row',
@@ -186,6 +188,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: BorderRadius.full,
     marginBottom: Spacing.base,
+    fontFamily: Typography.fontFamily.bold,
   },
   categoryEmoji: {
     fontSize: 14,
@@ -193,13 +196,14 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: Typography.fontSize.xs,
-    fontWeight: '600',
     color: Colors.textAccent,
+    fontFamily: Typography.fontFamily.extrabold,
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    fontFamily: Typography.fontFamily.bold,
   },
   progressBar: {
     flex: 1,
@@ -207,28 +211,31 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 3,
     overflow: 'hidden',
+    fontFamily: Typography.fontFamily.bold,
   },
   progressFill: {
     height: '100%',
     backgroundColor: Colors.primary,
     borderRadius: 3,
+    fontFamily: Typography.fontFamily.bold,
   },
   progressText: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textMuted,
-    fontWeight: '600',
     minWidth: 40,
     textAlign: 'right',
+    fontFamily: Typography.fontFamily.bold,
   },
   questionSection: {
     marginTop: Spacing['2xl'],
     marginBottom: Spacing['2xl'],
+    fontFamily: Typography.fontFamily.bold,
   },
   questionText: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     lineHeight: 32,
+    fontFamily: Typography.fontFamily.displayBold,
   },
   options: {
     gap: 0,

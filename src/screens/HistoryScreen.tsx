@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize.lg,
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
   },
   placeholder: {width: 50},
   subtitle: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: Typography.fontSize.md,
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.primary,
   },
   scoreInfo: {
     flex: 1,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   compatLabel: {
     fontSize: Typography.fontSize.base,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   questionCount: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: Typography.fontSize.lg,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   emptySubtitle: {

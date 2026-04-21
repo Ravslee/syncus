@@ -147,7 +147,7 @@ export const listenToRoom = (
     .doc(roomId)
     .onSnapshot(
       snapshot => {
-        if (snapshot.exists) {
+        if (typeof snapshot.exists === 'function' ? snapshot.exists() : snapshot.exists) {
           callback({...(snapshot.data() as Room), id: snapshot.id});
         } else {
           callback(null);
@@ -207,8 +207,55 @@ export const updateRoomCategory = async (
  */
 export const getRoomById = async (roomId: string): Promise<Room | null> => {
   const doc = await db.rooms().doc(roomId).get();
-  if (!doc.exists) {
+  if (!(typeof doc.exists === 'function' ? doc.exists() : doc.exists)) {
     return null;
   }
   return {...(doc.data() as Room), id: doc.id};
+};
+
+/**
+ * Get an active or waiting room for a user.
+ */
+export const getActiveRoomForUser = async (userId: string): Promise<Room | null> => {
+  const snapshot = await db.rooms()
+    .where('users', 'array-contains', userId)
+    .where('status', 'in', [RoomStatus.WAITING, RoomStatus.ACTIVE])
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+  return { ...(snapshot.docs[0].data() as Room), id: snapshot.docs[0].id };
+};
+
+/**
+ * Leave a room and clean up server state.
+ */
+export const leaveRoom = async (roomId: string, userId: string): Promise<void> => {
+  const roomRef = db.rooms().doc(roomId);
+  const roomDoc = await roomRef.get();
+
+  if (typeof roomDoc.exists === 'function' ? roomDoc.exists() : roomDoc.exists) {
+    const roomData = roomDoc.data() as Room;
+    const updatedUsers = roomData.users.filter(id => id !== userId);
+
+    if (updatedUsers.length === 0) {
+      // Last user left, close the room
+      await roomRef.update({
+        users: [],
+        status: RoomStatus.COMPLETED,
+      });
+    } else {
+      // Room still has users, just remove this one and go back to WAITING
+      await roomRef.update({
+        users: updatedUsers,
+        status: RoomStatus.WAITING,
+      });
+    }
+  }
+
+  // Delete the user's room state
+  const stateId = `${roomId}__${userId}`;
+  await db.roomStates().doc(stateId).delete();
 };

@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1.5,
     borderColor: Colors.glassBorder,
-    color: Colors.white,
+    color: Colors.textPrimary,
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '700',
     textAlign: 'center',

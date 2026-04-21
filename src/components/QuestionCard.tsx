@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   optionTextSelected: {
-    color: Colors.white,
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   check: {

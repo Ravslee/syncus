@@ -4,66 +4,82 @@
 // ============================================================
 
 export const Colors = {
-  // Primary palette
-  primary: '#7C5CFC',
-  primaryLight: '#A78BFA',
-  primaryDark: '#5B3FD4',
+  // Primary palette — sakura petal pink (saturated for light bg)
+  // primary: '#C25070',
+  primary: '#E879A8',
+  // primary: '#F9A8D4',
 
-  // Accent / gradient stops
-  accentPink: '#E879A8',
-  accentCyan: '#67E8F9',
-  accentMint: '#6EE7B7',
-  accentOrange: '#FDBA74',
+  primaryLight: '#E88FA8',
+  primaryDark: '#8B3050',
 
-  // Background layers
-  background: '#0F0A1E',
-  backgroundLight: '#1A1330',
-  surface: '#241D3B',
-  surfaceLight: '#2E2650',
 
-  // Card / glassmorphism
-  glass: 'rgba(255, 255, 255, 0.06)',
-  glassBorder: 'rgba(255, 255, 255, 0.10)',
-  glassHighlight: 'rgba(255, 255, 255, 0.12)',
 
-  // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8B0D2',
-  textMuted: '#7A7194',
-  textAccent: '#C4B5FD',
+  // Accent / gradient stops — from image
+  accentPink: '#F2A5BE',    // medium petal pink
+  accentCyan: '#8B5E4A',    // warm bark brown (branch color)
+  accentMint: '#E0D0D4',    // pale petal border
+  accentOrange: '#D4748C',  // deeper petal warmth
+
+  // Background layers — light pale blush (matches image)
+  background: '#FFF0F3',
+  backgroundLight: '#FFE4EB',
+  surface: '#FDD8E3',
+  surfaceLight: '#F9C8D6',
+
+  // Card / glassmorphism (light mode)
+  glass: 'rgba(255, 255, 255, 0.6)',
+  glassBorder: 'rgba(194, 80, 112, 0.18)',
+
+  glassHighlight: 'rgba(255, 255, 255, 0.75)',
+
+  // Text (dark for light background)
+  textPrimary: '#3A1520',
+  textSecondary: '#6B3448',
+  textMuted: '#9E6070',
+  textAccent: '#C25070',
 
   // Status
-  success: '#34D399',
-  error: '#F87171',
-  warning: '#FBBF24',
-  info: '#60A5FA',
+  success: '#2A9D6F',
+  error: '#D9534F',
+  warning: '#D4880A',
+  info: '#2D7DD2',
 
   // Misc
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  divider: 'rgba(255, 255, 255, 0.08)',
+  overlay: 'rgba(58, 21, 32, 0.4)',
+  divider: 'rgba(194, 80, 112, 0.15)',
 };
 
 export const Gradients = {
-  primary: ['#7C5CFC', '#A78BFA'] as [string, string],
-  primaryDiagonal: ['#5B3FD4', '#A78BFA'] as [string, string],
-  pinkPurple: ['#E879A8', '#7C5CFC'] as [string, string],
-  cyanPurple: ['#67E8F9', '#7C5CFC'] as [string, string],
-  mintTeal: ['#6EE7B7', '#34D399'] as [string, string],
-  orangeYellow: ['#FDBA74', '#FBBF24'] as [string, string],
-  background: ['#0F0A1E', '#1A1330'] as [string, string],
-  card: ['rgba(36, 29, 59, 0.8)', 'rgba(46, 38, 80, 0.6)'] as [string, string],
+  primary: ['#C25070', '#E88FA8'] as [string, string],
+  primaryDiagonal: ['#8B3050', '#C25070'] as [string, string],
+  pinkPurple: ['#D4748C', '#C25070'] as [string, string],
+  cyanPurple: ['#8B5E4A', '#C25070'] as [string, string],
+  mintTeal: ['#E88FA8', '#F2A5BE'] as [string, string],
+  orangeYellow: ['#D4748C', '#E88FA8'] as [string, string],
+  background: ['#FFF0F3', '#FFE4EB'] as [string, string],
+  card: ['rgba(255, 240, 243, 0.85)', 'rgba(253, 216, 227, 0.7)'] as [string, string],
 };
 
 export const Typography = {
-  // Font families (using system fonts; swap for custom if needed)
+  // Font families
   fontFamily: {
-    regular: 'System',
-    medium: 'System',
-    semibold: 'System',
-    bold: 'System',
+    regular: 'Nunito-Regular',
+    medium: 'Nunito-SemiBold',
+    semibold: 'Nunito-SemiBold',
+    bold: 'Nunito-Bold',
+    extrabold: 'Nunito-ExtraBold',
+    // Playfair Display — use for hero titles & romantic headings
+    // display: 'PlayfairDisplay-Regular',
+    // displayBold: 'PlayfairDisplay-Bold',
+    // displayExtrabold: 'PlayfairDisplay-ExtraBold',
+
+    // Playfair Display — use for hero titles & romantic headings
+    display: 'Nunito-Regular',
+    displayBold: 'Nunito-Bold',
+    displayExtrabold: 'Nunito-ExtraBold',
   },
 
   // Font sizes
@@ -112,30 +128,30 @@ export const BorderRadius = {
 export const Shadows = {
   sm: {
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#7C5CFC',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#C25070',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
   glow: {
-    shadowColor: '#7C5CFC',
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowColor: '#E88FA8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 8,
   },
 };

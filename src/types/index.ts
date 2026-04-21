@@ -120,6 +120,7 @@ export interface AppState {
   setRoom: (room: Room | null) => void;
   setRoomCode: (code: string) => void;
   clearRoom: () => void;
+  leaveRoom: (roomId: string, userId: string) => Promise<void>;
 
   // Quiz
   currentQuestionIndex: number;
@@ -130,6 +131,8 @@ export interface AppState {
   nextQuestion: () => void;
 
   // Partner
+  partner: User | null;
+  setPartner: (partner: User | null) => void;
   partnerStatus: RoomState | null;
   setPartnerStatus: (status: RoomState | null) => void;
 

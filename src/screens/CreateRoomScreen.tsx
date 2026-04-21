@@ -116,7 +116,7 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
               }}
               style={styles.copyButton}
             >
-              <Icon name="copy" size={18} color={Colors.white} />
+              <Icon name="copy" size={18} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </GlassCard>
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   codeText: {
     fontSize: 32,
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     letterSpacing: 8,
   },
   copyButton: {

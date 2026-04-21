@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import {Colors, Gradients, BorderRadius, Typography, Shadows} from '../constants/theme';
+import { Colors, Gradients, BorderRadius, Typography, Shadows } from '../constants/theme';
 
 interface GradientButtonProps {
   title: string;
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
   // Text
   text: {
     color: Colors.white,
-    fontWeight: '600',
     textAlign: 'center',
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   text_sm: {
     fontSize: Typography.fontSize.sm,

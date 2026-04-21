@@ -2,32 +2,32 @@
 // SyncUs - Result Screen (Reveal Together Gate)
 // ============================================================
 
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RouteProp} from '@react-navigation/native';
-import {ScreenWrapper} from '../components/ScreenWrapper';
-import {CircularProgress} from '../components/CircularProgress';
-import {GradientButton} from '../components/GradientButton';
-import {GlassCard} from '../components/GlassCard';
-import {Colors, Typography, Spacing, Shadows} from '../constants/theme';
-import {RootStackParamList, UserRoomStatus} from '../types';
-import {usePartnerStatus} from '../hooks/usePartnerStatus';
-import {useResults} from '../hooks/useResults';
-import {useAppStore} from '../store/useAppStore';
-import {getCompatibilityLabel, getInsightText} from '../utils/formatters';
-import {CATEGORIES, SAMPLE_QUESTIONS} from '../constants';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { CircularProgress } from '../components/CircularProgress';
+import { GradientButton } from '../components/GradientButton';
+import { GlassCard } from '../components/GlassCard';
+import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
+import { RootStackParamList, UserRoomStatus } from '../types';
+import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { useResults } from '../hooks/useResults';
+import { useAppStore } from '../store/useAppStore';
+import { getCompatibilityLabel, getInsightText } from '../utils/formatters';
+import { CATEGORIES, SAMPLE_QUESTIONS } from '../constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Result'>;
   route: RouteProp<RootStackParamList, 'Result'>;
 };
 
-export const ResultScreen: React.FC<Props> = ({navigation, route}) => {
-  const {roomId} = route.params;
-  const {partnerStatus} = usePartnerStatus(roomId);
-  const {results, loading, error, generateResults} = useResults(roomId);
-  const {room} = useAppStore();
+export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { roomId } = route.params;
+  const { partnerStatus } = usePartnerStatus(roomId);
+  const { results, loading, error, generateResults } = useResults(roomId);
+  const { room } = useAppStore();
   const [revealed, setRevealed] = useState(false);
 
   const partnerCompleted =
@@ -173,7 +173,7 @@ export const ResultScreen: React.FC<Props> = ({navigation, route}) => {
 
         <GradientButton
           title="View Full Summary"
-          onPress={() => navigation.replace('Summary', {roomId})}
+          onPress={() => navigation.replace('Summary', { roomId })}
           size="lg"
           style={styles.summaryButton}
         />
@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   // Waiting state
-  waitingEmoji: {fontSize: 56, marginBottom: Spacing.xl},
+  waitingEmoji: { fontSize: 56, marginBottom: Spacing.xl },
   waitingTitle: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily.displayBold,
   },
   waitingSubtitle: {
     fontSize: Typography.fontSize.base,
@@ -210,8 +210,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['2xl'],
     lineHeight: 22,
   },
-  partnerCard: {paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl},
-  partnerRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
+  partnerCard: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl },
+  partnerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   partnerText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
@@ -230,19 +230,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   // Reveal gate
-  revealEmoji: {fontSize: 72, marginBottom: Spacing.xl},
+  revealEmoji: { fontSize: 72, marginBottom: Spacing.xl },
   revealTitle: {
     fontSize: Typography.fontSize['2xl'],
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   revealSubtitle: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     marginBottom: Spacing['2xl'],
   },
-  revealButton: {width: '80%'},
+  revealButton: { width: '80%' },
   // Results
   resultBadge: {
     fontSize: Typography.fontSize.sm,
@@ -252,19 +252,19 @@ const styles = StyleSheet.create({
   },
   resultTitle: {
     fontSize: Typography.fontSize['4xl'],
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xl,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   resultSync: {
     color: Colors.primary,
   },
   compatLabel: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
     color: Colors.primaryLight,
     marginTop: Spacing.xl,
     marginBottom: Spacing.xl,
+    fontFamily: Typography.fontFamily.displayBold,
   },
   insightCard: {
     marginBottom: Spacing.xl,
@@ -272,14 +272,15 @@ const styles = StyleSheet.create({
   },
   insightTitle: {
     fontSize: Typography.fontSize.md,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
+    fontFamily: Typography.fontFamily.displayBold,
   },
   insightText: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     lineHeight: 22,
+    fontFamily: Typography.fontFamily.regular,
   },
   breakdownCard: {
     marginBottom: Spacing.xl,
@@ -287,9 +288,9 @@ const styles = StyleSheet.create({
   },
   breakdownTitle: {
     fontSize: Typography.fontSize.md,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.base,
+    fontFamily: Typography.fontFamily.displayBold,
   },
   breakdownStats: {
     flexDirection: 'row',
@@ -301,13 +302,14 @@ const styles = StyleSheet.create({
   },
   breakdownValue: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: 2,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   breakdownLabel: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.displayBold,
   },
   breakdownDivider: {
     width: 1,
@@ -316,5 +318,6 @@ const styles = StyleSheet.create({
   },
   summaryButton: {
     width: '100%',
+    fontFamily: Typography.fontFamily.displayBold,
   },
 });

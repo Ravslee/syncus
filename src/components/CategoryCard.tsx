@@ -3,9 +3,9 @@
 // ============================================================
 
 import React from 'react';
-import {TouchableOpacity, Text, StyleSheet, View} from 'react-native';
-import {Colors, BorderRadius, Shadows, Typography} from '../constants/theme';
-import {Category} from '../types';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Colors, BorderRadius, Shadows, Typography } from '../constants/theme';
+import { Category } from '../types';
 
 interface CategoryCardProps {
   category: Category;
@@ -24,13 +24,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       onPress={() => onPress(category)}
       style={[
         styles.card,
-        {borderColor: selected ? category.color : Colors.glassBorder},
+        { borderColor: selected ? Colors.primary : Colors.glassBorder },
         selected && styles.selected,
       ]}>
       <View
         style={[
           styles.iconContainer,
-          {backgroundColor: category.color + '20'},
+          { backgroundColor: Colors.primary + '20' },
         ]}>
         <Text style={styles.icon}>{category.icon}</Text>
       </View>
@@ -39,7 +39,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         {category.description}
       </Text>
       {selected && (
-        <View style={[styles.badge, {backgroundColor: category.color}]}>
+        <View style={[styles.badge, { backgroundColor: Colors.primary }]}>
           <Text style={styles.badgeText}>Selected</Text>
         </View>
       )}
@@ -73,14 +73,15 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: Typography.fontSize.base,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: 4,
+    fontFamily: Typography.fontFamily.bold,
   },
   description: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
     lineHeight: 16,
+    fontFamily: Typography.fontFamily.semibold,
   },
   badge: {
     position: 'absolute',
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: '700',
     color: Colors.white,
+    fontFamily: Typography.fontFamily.bold,
   },
 });

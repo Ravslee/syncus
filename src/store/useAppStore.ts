@@ -17,7 +17,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   roomCode: '',
   setRoom: (room: Room | null) => set({room}),
   setRoomCode: (code: string) => set({roomCode: code}),
-  clearRoom: () => set({room: null, roomCode: ''}),
+  clearRoom: () => set({room: null, roomCode: '', partner: null}),
+  leaveRoom: async (roomId: string, userId: string) => {
+    try {
+      const {leaveRoom: leaveRoomService} = await import('../services/roomService');
+      await leaveRoomService(roomId, userId);
+      get().clearRoom();
+    } catch (e) {
+      console.error('Failed to leave room:', e);
+    }
+  },
 
   // ---- Quiz ----
   currentQuestionIndex: 0,
@@ -34,6 +43,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
 
   // ---- Partner ----
+  partner: null,
+  setPartner: (partner: User | null) => set({partner}),
   partnerStatus: null,
   setPartnerStatus: (status: RoomState | null) =>
     set({partnerStatus: status}),
@@ -52,6 +63,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentQuestionIndex: 0,
       questions: [],
       answers: {},
+      partner: null,
       partnerStatus: null,
       results: null,
     }),
@@ -62,6 +74,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isOnboarded: false,
       room: null,
       roomCode: '',
+      partner: null,
       currentQuestionIndex: 0,
       questions: [],
       answers: {},

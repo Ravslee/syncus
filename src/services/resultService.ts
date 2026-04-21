@@ -112,18 +112,26 @@ export const saveResults = async (
   roomId: string,
   result: Result,
 ): Promise<void> => {
-  await db.results().doc(roomId).set(result);
+  // Use unique ID to avoid overwriting previous rounds
+  const resultId = `${roomId}__${Date.now()}`;
+  await db.results().doc(resultId).set(result);
 };
 
 /**
- * Fetch results for a room.
+ * Fetch results for a room (most recent).
  */
 export const fetchResults = async (roomId: string): Promise<Result | null> => {
-  const doc = await db.results().doc(roomId).get();
-  if (!doc.exists) {
+  const snapshot = await db
+    .results()
+    .where('roomId', '==', roomId)
+    .orderBy('calculatedAt', 'desc')
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
     return null;
   }
-  return doc.data() as Result;
+  return snapshot.docs[0].data() as Result;
 };
 
 /**

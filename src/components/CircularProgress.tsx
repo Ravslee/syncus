@@ -2,10 +2,10 @@
 // SyncUs - Circular Progress Component
 // ============================================================
 
-import React, {useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, Animated, Easing} from 'react-native';
-import Svg, {Circle} from 'react-native-svg';
-import {Colors, Typography} from '../constants/theme';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
+import { Colors, Typography } from '../constants/theme';
 
 interface CircularProgressProps {
   percentage: number;
@@ -52,7 +52,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   });
 
   return (
-    <View style={[styles.container, {width: size, height: size}]}>
+    <View style={[styles.container, { width: size, height: size }]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {/* Background circle */}
         <Circle
@@ -86,13 +86,13 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
 };
 
 // Helper to display animated percentage text
-const AnimatedText: React.FC<{value: Animated.Value}> = ({
+const AnimatedText: React.FC<{ value: Animated.Value }> = ({
   value,
 }) => {
   const [displayText, setDisplayText] = React.useState('0');
 
   useEffect(() => {
-    const id = value.addListener(({value: v}) => {
+    const id = value.addListener(({ value: v }) => {
       setDisplayText(Math.round(v).toString());
     });
     return () => {
@@ -115,12 +115,13 @@ const styles = StyleSheet.create({
   },
   percentage: {
     fontSize: Typography.fontSize['4xl'],
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   label: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     marginTop: 4,
+    fontFamily: Typography.fontFamily.displayBold,
   },
 });

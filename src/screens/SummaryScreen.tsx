@@ -3,26 +3,28 @@
 // ============================================================
 
 import React from 'react';
-import {View, Text, StyleSheet, Share} from 'react-native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RouteProp} from '@react-navigation/native';
-import {ScreenWrapper} from '../components/ScreenWrapper';
-import {CircularProgress} from '../components/CircularProgress';
-import {GradientButton} from '../components/GradientButton';
-import {GlassCard} from '../components/GlassCard';
-import {Colors, Typography, Spacing, BorderRadius} from '../constants/theme';
-import {RootStackParamList} from '../types';
-import {useAppStore} from '../store/useAppStore';
-import {getCompatibilityLabel, getInsightText} from '../utils/formatters';
-import {CATEGORIES, SAMPLE_QUESTIONS} from '../constants';
+import { View, Text, StyleSheet, Share } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { CircularProgress } from '../components/CircularProgress';
+import { GradientButton } from '../components/GradientButton';
+import { GlassCard } from '../components/GlassCard';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { RootStackParamList } from '../types';
+import { useAppStore } from '../store/useAppStore';
+import { getCompatibilityLabel, getInsightText } from '../utils/formatters';
+import { CATEGORIES, SAMPLE_QUESTIONS } from '../constants';
+import { db } from '../services/firebase';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Summary'>;
   route: RouteProp<RootStackParamList, 'Summary'>;
 };
 
-export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
-  const {results, resetQuiz} = useAppStore();
+export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { results, resetQuiz, user, partner } = useAppStore();
+  const partnerName = partner?.displayName ?? 'Partner';
 
   if (!results) {
     return (
@@ -76,16 +78,20 @@ export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
 
         {/* Insight */}
         <GlassCard style={styles.insightCard} variant="elevated">
-          <Text style={styles.sectionTitle}>💡 Personalized Insights</Text>
+          <Text style={styles.sectionTitle}>Personalized Insights</Text>
           <Text style={styles.insightText}>{getInsightText(score)}</Text>
         </GlassCard>
 
         {/* Per-Question Breakdown */}
-        <Text style={styles.sectionTitle}>📋 Question Breakdown</Text>
+        <Text style={styles.sectionTitle}>Question Breakdown</Text>
         {results.breakdown.map((item, index) => {
           const question = SAMPLE_QUESTIONS.find(
             q => q.id === item.questionId,
           );
+          const isUser1 = results.users[0] === user?.uid;
+          const myAnswer = isUser1 ? item.user1Answer : item.user2Answer;
+          const partnerAnswer = isUser1 ? item.user2Answer : item.user1Answer;
+
           return (
             <GlassCard
               key={item.questionId}
@@ -105,7 +111,7 @@ export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
                   <Text
                     style={[
                       styles.matchText,
-                      {color: item.match ? Colors.success : Colors.error},
+                      { color: item.match ? Colors.success : Colors.error },
                     ]}>
                     {item.match ? 'Match ✓' : 'Different ✗'}
                   </Text>
@@ -118,13 +124,13 @@ export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
                 <View style={styles.answerCol}>
                   <Text style={styles.answerLabel}>You</Text>
                   <Text style={styles.answerValue}>
-                    {question?.options[item.user1Answer] ?? `Option ${item.user1Answer + 1}`}
+                    {question?.options[myAnswer] ?? `Option ${myAnswer + 1}`}
                   </Text>
                 </View>
                 <View style={styles.answerCol}>
-                  <Text style={styles.answerLabel}>Partner</Text>
+                  <Text style={styles.answerLabel}>{partnerName}</Text>
                   <Text style={styles.answerValue}>
-                    {question?.options[item.user2Answer] ?? `Option ${item.user2Answer + 1}`}
+                    {question?.options[partnerAnswer] ?? `Option ${partnerAnswer + 1}`}
                   </Text>
                 </View>
               </View>
@@ -143,7 +149,7 @@ export const SummaryScreen: React.FC<Props> = ({navigation, route}) => {
           </View>
           <View style={styles.catBar}>
             <View
-              style={[styles.catBarFill, {width: `${score}%`}]}
+              style={[styles.catBarFill, { width: `${score}%` }]}
             />
           </View>
         </GlassCard>
@@ -185,15 +191,15 @@ const styles = StyleSheet.create({
   },
   compatLabel: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
     color: Colors.primaryLight,
     marginTop: Spacing.base,
+    fontFamily: Typography.fontFamily.bold,
   },
   sectionTitle: {
     fontSize: Typography.fontSize.md,
-    fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily.bold,
   },
   insightCard: {
     marginBottom: Spacing.xl,
@@ -202,6 +208,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     lineHeight: 22,
+    fontFamily: Typography.fontFamily.regular,
   },
   questionRow: {
     marginBottom: Spacing.md,
@@ -211,11 +218,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+    fontFamily: Typography.fontFamily.bold,
   },
   questionNumber: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: '700',
     color: Colors.textMuted,
+    fontFamily: Typography.fontFamily.bold,
   },
   matchBadge: {
     paddingHorizontal: 10,
@@ -224,12 +232,12 @@ const styles = StyleSheet.create({
   },
   matchText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: Typography.fontFamily.bold,
   },
   questionText: {
     fontSize: Typography.fontSize.base,
-    color: Colors.white,
-    fontWeight: '500',
+    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.semibold,
     marginBottom: Spacing.md,
   },
   answersRow: {
@@ -243,11 +251,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xs,
     color: Colors.textMuted,
     marginBottom: 2,
+    fontFamily: Typography.fontFamily.semibold,
   },
   answerValue: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    fontFamily: Typography.fontFamily.semibold,
   },
   categoryBreakdown: {
     marginTop: Spacing.xl,
@@ -261,13 +270,13 @@ const styles = StyleSheet.create({
   },
   catName: {
     fontSize: Typography.fontSize.base,
-    color: Colors.white,
-    fontWeight: '600',
+    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.semibold,
   },
   catScore: {
     fontSize: Typography.fontSize.base,
     color: Colors.primaryLight,
-    fontWeight: '700',
+    fontFamily: Typography.fontFamily.bold,
   },
   catBar: {
     height: 8,
@@ -290,5 +299,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.error,
     marginBottom: Spacing.xl,
+    fontFamily: Typography.fontFamily.regular,
   },
 });

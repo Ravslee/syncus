@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: Typography.fontSize['3xl'],
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     letterSpacing: 1,
   },
   tagline: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: '700',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xl,
     textAlign: 'center',
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
     fontSize: Typography.fontSize.base,
-    color: Colors.white,
+    color: Colors.textPrimary,
   },
   button: {
     marginTop: Spacing.lg,

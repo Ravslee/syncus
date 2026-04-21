@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingVertical: 14,
     fontSize: Typography.fontSize.md,
-    color: Colors.white,
+    color: Colors.textPrimary,
   },
   hint: {
     fontSize: Typography.fontSize.xs,

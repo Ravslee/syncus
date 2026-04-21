@@ -3,8 +3,8 @@
 // ============================================================
 
 import React from 'react';
-import {View, StyleSheet, ViewStyle} from 'react-native';
-import {Colors, BorderRadius, Shadows} from '../constants/theme';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import { Colors, BorderRadius, Shadows } from '../constants/theme';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -50,7 +50,10 @@ const styles = StyleSheet.create({
     ...Shadows.md,
   },
   subtle: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    // backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    // borderColor: 'rgba(255, 255, 255, 0.06)',
+
+    backgroundColor: Colors.glass,
+    borderColor: Colors.glassBorder,
   },
 });

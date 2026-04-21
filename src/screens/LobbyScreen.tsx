@@ -2,22 +2,61 @@
 // SyncUs - Lobby Screen
 // ============================================================
 
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ScreenWrapper} from '../components/ScreenWrapper';
-import {GradientButton} from '../components/GradientButton';
-import {Colors, Typography, Spacing, Shadows} from '../constants/theme';
-import {RootStackParamList} from '../types';
-import {useAppStore} from '../store/useAppStore';
-import {signOut} from '../services/authService';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { GradientButton } from '../components/GradientButton';
+import { GlassCard } from '../components/GlassCard';
+import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
+import { RootStackParamList, Room } from '../types';
+import { useAppStore } from '../store/useAppStore';
+import { getActiveRoomForUser } from '../services/roomService';
+import { LobbyIllustration } from '../components/LobbyIllustration';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Lobby'>;
 };
 
-export const LobbyScreen: React.FC<Props> = ({navigation}) => {
-  const {user} = useAppStore();
+export const LobbyScreen: React.FC<Props> = ({ navigation }) => {
+  const { user, setRoom } = useAppStore();
+  const [loadingRoom, setLoadingRoom] = useState<boolean>(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      if (!user) return;
+
+      const fetchRoom = async () => {
+        setLoadingRoom(true);
+        try {
+          const room = await getActiveRoomForUser(user.uid);
+          if (active && room) {
+            setRoom(room);
+            navigation.replace('WaitingRoom', { roomId: room.id, roomCode: room.code });
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          if (active) setLoadingRoom(false);
+        }
+      };
+
+      fetchRoom();
+      return () => { active = false; };
+    }, [user, navigation, setRoom])
+  );
+
+  if (loadingRoom) {
+    return (
+      <ScreenWrapper>
+        <View style={[styles.flexCenter, { flex: 1 }]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper>
@@ -30,7 +69,7 @@ export const LobbyScreen: React.FC<Props> = ({navigation}) => {
           <Text style={styles.appBadge}>SyncUs</Text>
         </View>
         <TouchableOpacity
-          onPress={signOut}
+          onPress={() => Alert.alert('Profile', 'Profile feature coming soon!')}
           style={styles.profileButton}>
           <Text style={styles.profileInitial}>
             {user?.displayName?.charAt(0).toUpperCase() ?? '?'}
@@ -39,15 +78,20 @@ export const LobbyScreen: React.FC<Props> = ({navigation}) => {
       </View>
 
       <View style={styles.flexCenter}>
+        {/* Illustration */}
+        <View style={styles.illustrationContainer}>
+          <LobbyIllustration width="100%" height="100%" />
+        </View>
+
         {/* Hero Section */}
         <View style={styles.hero}>
-        <Text style={styles.heroTitle}>
-          Discover how well{'\n'}you{' '}
-          <Text style={styles.heroHighlight}>sync</Text>
-        </Text>
-        <Text style={styles.heroSubtitle}>
-          Invite your partner, answer fun relationship questions, and explore your compatibility together.
-        </Text>
+          <Text style={styles.heroTitle}>
+            Discover how well{'\n'}you{' '}
+            <Text style={styles.heroHighlight}>sync</Text>
+          </Text>
+          <Text style={styles.heroSubtitle}>
+            Invite your partner, answer fun relationship questions, and explore your compatibility together.
+          </Text>
         </View>
       </View>
 
@@ -58,7 +102,6 @@ export const LobbyScreen: React.FC<Props> = ({navigation}) => {
           onPress={() => navigation.navigate('CreateRoom')}
           size="lg"
           style={styles.actionButton}
-          icon={<Text style={styles.actionIcon}>🔗</Text>}
         />
         <GradientButton
           title="Join Room"
@@ -66,7 +109,6 @@ export const LobbyScreen: React.FC<Props> = ({navigation}) => {
           variant="secondary"
           size="lg"
           style={styles.actionButton}
-          icon={<Text style={styles.actionIcon}>🎯</Text>}
         />
       </View>
     </ScreenWrapper>
@@ -87,9 +129,9 @@ const styles = StyleSheet.create({
   },
   appBadge: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     letterSpacing: 0.5,
+    fontFamily: Typography.fontFamily.extrabold,
   },
   profileButton: {
     width: 40,
@@ -109,15 +151,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  illustrationContainer: {
+    height: 300,
+    width: '100%',
+    marginBottom: Spacing.xl,
+    alignItems: 'center',
+  },
   hero: {
     marginBottom: Spacing.xl,
+    alignItems: 'center',
   },
   heroTitle: {
     fontSize: Typography.fontSize['3xl'],
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     lineHeight: 44,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   heroHighlight: {
     color: Colors.primary,
@@ -126,6 +175,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     lineHeight: 22,
+    fontFamily: Typography.fontFamily.regular,
+    textAlign: 'center',
   },
   actions: {
     gap: Spacing.md,

@@ -2,7 +2,7 @@
 // SyncUs - Quiz Service
 // ============================================================
 
-import {db} from './firebase';
+import { db, firestore } from './firebase';
 import {Question, Answer, UserRoomStatus} from '../types';
 import {SAMPLE_QUESTIONS, QUESTIONS_PER_QUIZ} from '../constants';
 
@@ -54,6 +54,7 @@ export const submitAnswer = async (
     userId,
     questionId,
     selectedOption,
+    createdAt: Date.now(),
   };
   await db.answers().doc(answerId).set(answer);
 };
@@ -64,7 +65,7 @@ export const submitAnswer = async (
 export const batchSubmitAnswers = async (
   answers: Answer[],
 ): Promise<void> => {
-  const batch = db.answers().firestore.batch();
+  const batch = firestore().batch();
 
   answers.forEach(answer => {
     const answerId = `${answer.roomId}__${answer.userId}__${answer.questionId}`;
@@ -118,4 +119,25 @@ export const fetchUserAnswers = async (
     .get();
 
   return snapshot.docs.map(doc => doc.data() as Answer);
+};
+/**
+ * Clear all answers in a room for a specific user.
+ * Used when starting a new round of quiz.
+ */
+export const clearRoomAnswers = async (
+  roomId: string,
+  userId: string,
+): Promise<void> => {
+  const snapshot = await db
+    .answers()
+    .where('roomId', '==', roomId)
+    .where('userId', '==', userId)
+    .get();
+
+  const batch = firestore().batch();
+  snapshot.docs.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
 };

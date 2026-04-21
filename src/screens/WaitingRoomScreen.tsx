@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
@@ -12,6 +12,7 @@ import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
 import { RootStackParamList, RoomStatus } from '../types';
 import { useRoom } from '../hooks/useRoom';
 import { useAppStore } from '../store/useAppStore';
+import { db } from '../services/firebase';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type Props = {
@@ -22,7 +23,28 @@ type Props = {
 export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
   const { roomId, roomCode } = route.params;
   const { room } = useRoom(roomId);
-  const { user } = useAppStore();
+  const { user, partner, setPartner, leaveRoom } = useAppStore();
+  const partnerName = partner?.displayName ?? 'Partner';
+
+  // Fetch partner details only when necessary
+  useEffect(() => {
+    const fetchPartner = async () => {
+      if (!room || !user) return;
+
+      const partnerId = room.users.find(id => id !== user.uid);
+      if (partnerId && !partner) {
+        try {
+          const pDoc = await db.users().doc(partnerId).get();
+          if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
+            setPartner(pDoc.data() as any);
+          }
+        } catch (e) {
+          console.error('Failed to fetch partner:', e);
+        }
+      }
+    };
+    fetchPartner();
+  }, [room, user, partner, setPartner]);
 
   // Navigate when both users are ready
   useEffect(() => {
@@ -34,10 +56,24 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [room, roomId, navigation]);
 
+  const handleLeave = async () => {
+    if (user && roomId) {
+      await leaveRoom(roomId, user.uid);
+      navigation.replace('Lobby');
+    }
+  };
+
   const partnerJoined = room && room.users.length === 2;
+
 
   return (
     <ScreenWrapper>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleLeave} style={styles.leaveButton}>
+          <Icon name="close" size={24} color={Colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.container}>
         <Text style={styles.title}>Preparing your Sync</Text>
         <Text style={styles.subtitle}>
@@ -85,13 +121,13 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
                 partnerJoined ? styles.avatarFilled : styles.avatarEmpty,
               ]}>
               {partnerJoined ? (
-                <Text style={styles.avatarText}>P</Text>
+                <Text style={styles.avatarText}>{partnerName.charAt(0).toUpperCase()}</Text>
               ) : (
                 <Text style={styles.avatarPlaceholder}>?</Text>
               )}
             </View>
             <Text style={styles.userName}>
-              {partnerJoined ? 'Partner' : 'Waiting...'}
+              {partnerJoined ? partnerName : 'Waiting...'}
             </Text>
             {partnerJoined && (
               <View style={styles.readyBadge}>
@@ -112,24 +148,39 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    paddingTop: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  leaveButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
+    marginTop: -40, // Offset for the header
   },
   title: {
     fontSize: Typography.fontSize['2xl'],
-    fontWeight: '800',
-    color: Colors.white,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily.extrabold,
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing['2xl'],
+    fontFamily: Typography.fontFamily.semibold,
   },
   codeCard: {
     alignItems: 'center',
@@ -142,12 +193,13 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     letterSpacing: 2,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily.semibold,
   },
   code: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: '800',
     color: Colors.primary,
     letterSpacing: 4,
+    fontFamily: Typography.fontFamily.extrabold,
   },
   usersRow: {
     flexDirection: 'row',
@@ -180,18 +232,19 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: '700',
     color: Colors.white,
+    fontFamily: Typography.fontFamily.bold,
   },
   avatarPlaceholder: {
     fontSize: Typography.fontSize.xl,
     color: Colors.textMuted,
+    fontFamily: Typography.fontFamily.bold,
   },
   userName: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
-    fontWeight: '600',
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily.semibold,
   },
   readyBadge: {
     backgroundColor: Colors.success + '20',
@@ -202,7 +255,7 @@ const styles = StyleSheet.create({
   readyText: {
     fontSize: 10,
     color: Colors.success,
-    fontWeight: '700',
+    fontFamily: Typography.fontFamily.bold,
   },
   connectorContainer: {
     marginTop: -30,
@@ -215,5 +268,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     fontStyle: 'italic',
+    fontFamily: Typography.fontFamily.regular,
   },
 });
