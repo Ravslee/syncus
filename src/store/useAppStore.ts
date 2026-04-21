@@ -29,13 +29,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // ---- Quiz ----
+  quizPhase: 1,
   currentQuestionIndex: 0,
   questions: [],
   answers: {},
+  guesses: {},
+  setQuizPhase: (phase: 1 | 2) => set({quizPhase: phase}),
   setQuestions: (questions: Question[]) => set({questions}),
   setAnswer: (questionId: string, option: number) =>
     set(state => ({
       answers: {...state.answers, [questionId]: option},
+    })),
+  setGuess: (questionId: string, option: number) =>
+    set(state => ({
+      guesses: {...state.guesses, [questionId]: option},
     })),
   nextQuestion: () =>
     set(state => ({
@@ -60,9 +67,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   // ---- Reset ----
   resetQuiz: () =>
     set({
+      quizPhase: 1,
       currentQuestionIndex: 0,
       questions: [],
       answers: {},
+      guesses: {},
       partner: null,
       partnerStatus: null,
       results: null,
@@ -75,9 +84,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       room: null,
       roomCode: '',
       partner: null,
+      quizPhase: 1,
       currentQuestionIndex: 0,
       questions: [],
       answers: {},
+      guesses: {},
       partnerStatus: null,
       results: null,
       history: [],

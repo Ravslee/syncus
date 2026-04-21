@@ -41,14 +41,15 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   const category = CATEGORIES.find(c => c.id === results.categoryId);
-  const score = results.score;
-  const matchCount = results.breakdown.filter(b => b.match).length;
-  const mismatchCount = results.breakdown.filter(b => !b.match).length;
+  const isUser1 = results.users[0] === user?.uid;
+  const myScore = isUser1 ? results.user1Score : results.user2Score;
+  const total = results.totalQuestions || 1;
+  const scorePerc = Math.round((myScore / total) * 100);
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `We scored ${score}% on SyncUs! ${getCompatibilityLabel(score)} 💜 Try it: syncus.app`,
+        message: `I guessed ${myScore} of your answers right on SyncUs! 💜 Try it: syncus.app`,
       });
     } catch {
       // User cancelled
@@ -65,21 +66,21 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
         {/* Header Score */}
         <View style={styles.scoreSection}>
           <CircularProgress
-            percentage={score}
+            percentage={scorePerc}
             size={160}
             strokeWidth={12}
             color={Colors.primary}
-            label="Sync"
+            label="Accuracy"
           />
           <Text style={styles.compatLabel}>
-            {getCompatibilityLabel(score)}
+            You got {myScore} out of {total}!
           </Text>
         </View>
 
         {/* Insight */}
         <GlassCard style={styles.insightCard} variant="elevated">
-          <Text style={styles.sectionTitle}>Personalized Insights</Text>
-          <Text style={styles.insightText}>{getInsightText(score)}</Text>
+          <Text style={styles.sectionTitle}>Detailed Breakdown</Text>
+          <Text style={styles.insightText}>See below for exactly what you guessed vs what {partnerName} actually chose.</Text>
         </GlassCard>
 
         {/* Per-Question Breakdown */}
@@ -88,22 +89,23 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
           const question = SAMPLE_QUESTIONS.find(
             q => q.id === item.questionId,
           );
-          const isUser1 = results.users[0] === user?.uid;
-          const myAnswer = isUser1 ? item.user1Answer : item.user2Answer;
+          
+          const myGuess = isUser1 ? item.user1Guess : item.user2Guess;
           const partnerAnswer = isUser1 ? item.user2Answer : item.user1Answer;
+          const match = isUser1 ? item.user1Match : item.user2Match;
 
           return (
             <GlassCard
               key={item.questionId}
               style={styles.questionRow}
-              variant={item.match ? 'default' : 'subtle'}>
+              variant={match ? 'default' : 'subtle'}>
               <View style={styles.questionHeader}>
                 <Text style={styles.questionNumber}>Q{index + 1}</Text>
                 <View
                   style={[
                     styles.matchBadge,
                     {
-                      backgroundColor: item.match
+                      backgroundColor: match
                         ? Colors.success + '20'
                         : Colors.error + '20',
                     },
@@ -111,9 +113,9 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
                   <Text
                     style={[
                       styles.matchText,
-                      { color: item.match ? Colors.success : Colors.error },
+                      { color: match ? Colors.success : Colors.error },
                     ]}>
-                    {item.match ? 'Match ✓' : 'Different ✗'}
+                    {match ? 'Hit! ✓' : 'Miss ✗'}
                   </Text>
                 </View>
               </View>
@@ -122,13 +124,13 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
               </Text>
               <View style={styles.answersRow}>
                 <View style={styles.answerCol}>
-                  <Text style={styles.answerLabel}>You</Text>
+                  <Text style={styles.answerLabel}>You Guessed</Text>
                   <Text style={styles.answerValue}>
-                    {question?.options[myAnswer] ?? `Option ${myAnswer + 1}`}
+                    {question?.options[myGuess] ?? `Option ${myGuess + 1}`}
                   </Text>
                 </View>
                 <View style={styles.answerCol}>
-                  <Text style={styles.answerLabel}>{partnerName}</Text>
+                  <Text style={styles.answerLabel}>{partnerName} Chose</Text>
                   <Text style={styles.answerValue}>
                     {question?.options[partnerAnswer] ?? `Option ${partnerAnswer + 1}`}
                   </Text>
@@ -140,16 +142,16 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
 
         {/* Category Breakdown */}
         <GlassCard style={styles.categoryBreakdown} variant="elevated">
-          <Text style={styles.sectionTitle}>📊 Category Breakdown</Text>
+          <Text style={styles.sectionTitle}>📊 Category Accuracy</Text>
           <View style={styles.catRow}>
             <Text style={styles.catName}>
               {category?.icon} {category?.name}
             </Text>
-            <Text style={styles.catScore}>{score}%</Text>
+            <Text style={styles.catScore}>{scorePerc}%</Text>
           </View>
           <View style={styles.catBar}>
             <View
-              style={[styles.catBarFill, { width: `${score}%` }]}
+              style={[styles.catBarFill, { width: `${scorePerc}%` }]}
             />
           </View>
         </GlassCard>

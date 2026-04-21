@@ -13,6 +13,8 @@ export enum RoomStatus {
 export enum UserRoomStatus {
   JOINED = 'joined',
   ANSWERING = 'answering',
+  WAITING_FOR_PARTNER = 'waiting_for_partner',
+  GUESSING = 'guessing',
   COMPLETED = 'completed',
 }
 
@@ -33,6 +35,7 @@ export interface Room {
   users: string[];
   status: RoomStatus;
   categoryId: string;
+  currentRoundId?: string;
   createdAt: number;
 }
 
@@ -63,9 +66,11 @@ export interface Question {
 
 export interface Answer {
   roomId: string;
+  roundId: string;
   userId: string;
   questionId: string;
   selectedOption: number;
+  guessedOption?: number;
   createdAt: number;
 }
 
@@ -74,12 +79,17 @@ export interface QuestionBreakdown {
   questionText: string;
   user1Answer: number;
   user2Answer: number;
-  match: boolean;
+  user1Guess: number;
+  user2Guess: number;
+  user1Match: boolean;
+  user2Match: boolean;
 }
 
 export interface Result {
   roomId: string;
-  score: number;
+  roundId: string;
+  user1Score: number;
+  user2Score: number;
   totalQuestions: number;
   breakdown: QuestionBreakdown[];
   calculatedAt: number;
@@ -123,11 +133,15 @@ export interface AppState {
   leaveRoom: (roomId: string, userId: string) => Promise<void>;
 
   // Quiz
+  quizPhase: 1 | 2;
   currentQuestionIndex: number;
   questions: Question[];
   answers: Record<string, number>;
+  guesses: Record<string, number>;
+  setQuizPhase: (phase: 1 | 2) => void;
   setQuestions: (q: Question[]) => void;
   setAnswer: (questionId: string, option: number) => void;
+  setGuess: (questionId: string, option: number) => void;
   nextQuestion: () => void;
 
   // Partner

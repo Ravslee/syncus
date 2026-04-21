@@ -26,19 +26,20 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
   }
 
   const [user1Id, user2Id] = users;
+  const roundId = roomData?.currentRoundId || `${Date.now()}`;
 
   // Fetch answers for both users with retry for Firestore eventual consistency
   let [user1Answers, user2Answers] = await Promise.all([
-    fetchUserAnswers(roomId, user1Id),
-    fetchUserAnswers(roomId, user2Id),
+    fetchUserAnswers(roomId, user1Id, roundId),
+    fetchUserAnswers(roomId, user2Id, roundId),
   ]);
 
   let retries = 0;
   while ((user1Answers.length === 0 || user2Answers.length === 0) && retries < 5) {
     await new Promise<void>(resolve => setTimeout(resolve, 1000));
     const [u1, u2] = await Promise.all([
-      fetchUserAnswers(roomId, user1Id),
-      fetchUserAnswers(roomId, user2Id),
+      fetchUserAnswers(roomId, user1Id, roundId),
+      fetchUserAnswers(roomId, user2Id, roundId),
     ]);
     user1Answers = u1;
     user2Answers = u2;
@@ -47,10 +48,10 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
 
   // Build answer maps keyed by questionId
   const user1Map = new Map(
-    user1Answers.map(a => [a.questionId, a.selectedOption]),
+    user1Answers.map(a => [a.questionId, a]),
   );
   const user2Map = new Map(
-    user2Answers.map(a => [a.questionId, a.selectedOption]),
+    user2Answers.map(a => [a.questionId, a]),
   );
 
   // Get all unique question IDs
@@ -66,34 +67,42 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
 
   // Calculate breakdown
   const breakdown: QuestionBreakdown[] = [];
-  let matches = 0;
+  let user1Matches = 0;
+  let user2Matches = 0;
 
   allQuestionIds.forEach(qId => {
-    const u1 = user1Map.get(qId) ?? -1;
-    const u2 = user2Map.get(qId) ?? -1;
-    const match = u1 === u2 && u1 !== -1;
+    const u1A = user1Map.get(qId)?.selectedOption ?? -1;
+    const u1G = user1Map.get(qId)?.guessedOption ?? -1;
+    const u2A = user2Map.get(qId)?.selectedOption ?? -1;
+    const u2G = user2Map.get(qId)?.guessedOption ?? -1;
 
-    if (match) {
-      matches++;
-    }
+    const u1Match = u1G === u2A && u1G !== -1;
+    const u2Match = u2G === u1A && u2G !== -1;
+
+    if (u1Match) user1Matches++;
+    if (u2Match) user2Matches++;
 
     breakdown.push({
       questionId: qId,
       questionText: questionTextMap.get(qId) ?? '',
-      user1Answer: u1,
-      user2Answer: u2,
-      match,
+      user1Answer: u1A,
+      user2Answer: u2A,
+      user1Guess: u1G,
+      user2Guess: u2G,
+      user1Match: u1Match,
+      user2Match: u2Match,
     });
   });
 
   const totalQuestions = allQuestionIds.size;
-  const score = totalQuestions > 0
-    ? Math.round((matches / totalQuestions) * 100)
-    : 0;
+  const user1Score = user1Matches;
+  const user2Score = user2Matches;
 
   const result: Result = {
     roomId,
-    score,
+    roundId,
+    user1Score,
+    user2Score,
     totalQuestions,
     breakdown,
     calculatedAt: Date.now(),
@@ -113,7 +122,7 @@ export const saveResults = async (
   result: Result,
 ): Promise<void> => {
   // Use unique ID to avoid overwriting previous rounds
-  const resultId = `${roomId}__${Date.now()}`;
+  const resultId = `${roomId}__${result.roundId}`;
   await db.results().doc(resultId).set(result);
 };
 

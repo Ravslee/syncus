@@ -3,8 +3,8 @@
 // ============================================================
 
 import { db, firestore } from './firebase';
-import {Question, Answer, UserRoomStatus} from '../types';
-import {SAMPLE_QUESTIONS, QUESTIONS_PER_QUIZ} from '../constants';
+import { Question, Answer, UserRoomStatus } from '../types';
+import { SAMPLE_QUESTIONS, QUESTIONS_PER_QUIZ } from '../constants';
 
 /**
  * Fetch questions for a given category.
@@ -47,16 +47,31 @@ export const submitAnswer = async (
   userId: string,
   questionId: string,
   selectedOption: number,
+  roundId: string,
 ): Promise<void> => {
-  const answerId = `${roomId}__${userId}__${questionId}`;
+  const answerId = `${roomId}__${roundId}__${userId}__${questionId}`;
   const answer: Answer = {
     roomId,
+    roundId,
     userId,
     questionId,
     selectedOption,
     createdAt: Date.now(),
   };
   await db.answers().doc(answerId).set(answer);
+};
+
+export const submitGuess = async (
+  roomId: string,
+  userId: string,
+  questionId: string,
+  guessedOption: number,
+  roundId: string,
+): Promise<void> => {
+  const answerId = `${roomId}__${roundId}__${userId}__${questionId}`;
+  await db.answers().doc(answerId).update({
+    guessedOption,
+  });
 };
 
 /**
@@ -68,7 +83,7 @@ export const batchSubmitAnswers = async (
   const batch = firestore().batch();
 
   answers.forEach(answer => {
-    const answerId = `${answer.roomId}__${answer.userId}__${answer.questionId}`;
+    const answerId = `${answer.roomId}__${answer.roundId}__${answer.userId}__${answer.questionId}`;
     const ref = db.answers().doc(answerId);
     batch.set(ref, answer);
   });
@@ -83,11 +98,12 @@ export const updateProgress = async (
   roomId: string,
   userId: string,
   questionIndex: number,
+  status: UserRoomStatus = UserRoomStatus.ANSWERING,
 ): Promise<void> => {
   const stateId = `${roomId}__${userId}`;
   await db.roomStates().doc(stateId).update({
     currentQuestionIndex: questionIndex,
-    status: UserRoomStatus.ANSWERING,
+    status,
   });
 };
 
@@ -105,16 +121,21 @@ export const markCompleted = async (
   });
 };
 
+
+
+
 /**
  * Fetch all answers for a specific user in a room.
  */
 export const fetchUserAnswers = async (
   roomId: string,
   userId: string,
+  roundId: string,
 ): Promise<Answer[]> => {
   const snapshot = await db
     .answers()
     .where('roomId', '==', roomId)
+    .where('roundId', '==', roundId)
     .where('userId', '==', userId)
     .get();
 

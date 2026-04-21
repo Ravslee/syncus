@@ -10,6 +10,8 @@ interface QuestionCardProps {
   option: string;
   index: number;
   selected: boolean;
+  isCorrect?: boolean;
+  isWrong?: boolean;
   onPress: (index: number) => void;
 }
 
@@ -17,6 +19,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   option,
   index,
   selected,
+  isCorrect,
+  isWrong,
   onPress,
 }) => {
   const labels = ['A', 'B', 'C', 'D'];
@@ -25,18 +29,46 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={() => onPress(index)}
-      style={[styles.card, selected && styles.selected]}>
-      <View style={[styles.label, selected && styles.labelSelected]}>
-        <Text style={[styles.labelText, selected && styles.labelTextSelected]}>
+      style={[
+        styles.card,
+        selected && styles.selected,
+        isCorrect && styles.correct,
+        isWrong && styles.wrong
+      ]}>
+      <View style={[
+        styles.label,
+        selected && styles.labelSelected,
+        isCorrect && styles.labelCorrect,
+        isWrong && styles.labelWrong
+      ]}>
+        <Text style={[
+          styles.labelText,
+          (selected || isCorrect || isWrong) && styles.labelTextSelected
+        ]}>
           {labels[index]}
         </Text>
       </View>
-      <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+      <Text style={[
+        styles.optionText,
+        selected && styles.optionTextSelected,
+        isCorrect && styles.optionTextCorrect,
+        isWrong && styles.optionTextWrong
+      ]}>
         {option}
       </Text>
-      {selected && (
+      {selected && !isCorrect && !isWrong && (
         <View style={styles.check}>
           <Text style={styles.checkText}>✓</Text>
+        </View>
+      )}
+      {isCorrect && (
+        <View style={[styles.check, {backgroundColor: Colors.success}]}>
+          <Text style={styles.checkText}>✓</Text>
+        </View>
+      )}
+      {isWrong && (
+        <View style={[styles.check, {backgroundColor: Colors.error}]}>
+          <Text style={styles.checkText}>✗</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -58,6 +90,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary + '20',
     borderColor: Colors.primary,
   },
+  correct: {
+    backgroundColor: Colors.success + '20',
+    borderColor: Colors.success,
+  },
+  wrong: {
+    backgroundColor: Colors.error + '20',
+    borderColor: Colors.error,
+  },
   label: {
     width: 36,
     height: 36,
@@ -69,6 +109,12 @@ const styles = StyleSheet.create({
   },
   labelSelected: {
     backgroundColor: Colors.primary,
+  },
+  labelCorrect: {
+    backgroundColor: Colors.success,
+  },
+  labelWrong: {
+    backgroundColor: Colors.error,
   },
   labelText: {
     fontSize: Typography.fontSize.sm,
@@ -86,6 +132,14 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     color: Colors.primaryDark,
+    fontWeight: '600',
+  },
+  optionTextCorrect: {
+    color: Colors.success,
+    fontWeight: '600',
+  },
+  optionTextWrong: {
+    color: Colors.error,
     fontWeight: '600',
   },
   check: {

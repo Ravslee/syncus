@@ -58,6 +58,7 @@ export const createRoom = async (userId: string): Promise<Room> => {
     users: [userId],
     status: RoomStatus.WAITING,
     categoryId: '',
+    currentRoundId: Date.now().toString(),
     createdAt: Date.now(),
   };
 
@@ -199,7 +200,10 @@ export const updateRoomCategory = async (
   roomId: string,
   categoryId: string,
 ): Promise<void> => {
-  await db.rooms().doc(roomId).update({categoryId});
+  await db.rooms().doc(roomId).update({
+    categoryId,
+    currentRoundId: Date.now().toString(),
+  });
 };
 
 /**

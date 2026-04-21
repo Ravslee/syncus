@@ -27,7 +27,7 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   const { roomId } = route.params;
   const { partnerStatus } = usePartnerStatus(roomId);
   const { results, loading, error, generateResults } = useResults(roomId);
-  const { room } = useAppStore();
+  const { user, room } = useAppStore();
   const [revealed, setRevealed] = useState(false);
 
   const partnerCompleted =
@@ -114,7 +114,12 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   // Show Results
-  const score = results?.score ?? 0;
+  const isUser1 = results?.users[0] === user?.uid;
+  const myScore = isUser1 ? results?.user1Score ?? 0 : results?.user2Score ?? 0;
+  const partnerScore = isUser1 ? results?.user2Score ?? 0 : results?.user1Score ?? 0;
+  const total = results?.totalQuestions ?? 1;
+
+  const myPerc = Math.round((myScore / total) * 100);
 
   return (
     <ScreenWrapper scrollable>
@@ -124,24 +129,27 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
         </Text>
 
         <Text style={styles.resultTitle}>
-          {score}% <Text style={styles.resultSync}>Sync</Text>
+          {myScore}/{total} <Text style={styles.resultSync}>vs</Text> {partnerScore}/{total}
         </Text>
 
         <CircularProgress
-          percentage={score}
+          percentage={myPerc}
           size={200}
           strokeWidth={14}
           color={Colors.primary}
-          label="Compatibility"
+          label="Your Accuracy"
         />
 
         <Text style={styles.compatLabel}>
-          {getCompatibilityLabel(score)}
+          {myScore > partnerScore ? 'You know them better! 🎉' : partnerScore > myScore ? 'They know you better! 😅' : 'Its a tie! 🤝'}
         </Text>
 
         <GlassCard style={styles.insightCard} variant="elevated">
-          <Text style={styles.insightTitle}>Personalized Insights</Text>
-          <Text style={styles.insightText}>{getInsightText(score)}</Text>
+          <Text style={styles.insightTitle}>How did you do?</Text>
+          <Text style={styles.insightText}>
+             You correctly guessed {myScore} out of {total} of your partner's answers.
+             Your partner correctly guessed {partnerScore} of yours.
+          </Text>
         </GlassCard>
 
         {/* Breakdown Preview */}
@@ -150,16 +158,16 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.breakdownStats}>
             <View style={styles.breakdownItem}>
               <Text style={styles.breakdownValue}>
-                {results?.breakdown.filter(b => b.match).length ?? 0}
+                {myScore}
               </Text>
-              <Text style={styles.breakdownLabel}>Matches</Text>
+              <Text style={styles.breakdownLabel}>Your Hits</Text>
             </View>
             <View style={styles.breakdownDivider} />
             <View style={styles.breakdownItem}>
               <Text style={styles.breakdownValue}>
-                {results?.breakdown.filter(b => !b.match).length ?? 0}
+                {partnerScore}
               </Text>
-              <Text style={styles.breakdownLabel}>Differences</Text>
+              <Text style={styles.breakdownLabel}>Partner Hits</Text>
             </View>
             <View style={styles.breakdownDivider} />
             <View style={styles.breakdownItem}>

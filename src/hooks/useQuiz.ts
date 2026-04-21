@@ -6,19 +6,24 @@ import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import {
   submitAnswer,
+  submitGuess,
   updateProgress,
   markCompleted,
   batchSubmitAnswers,
 } from '../services/quizService';
-import { Answer } from '../types';
+import { Answer, UserRoomStatus } from '../types';
 
 export const useQuiz = (roomId: string) => {
   const {
     user,
+    room,
     questions,
+    quizPhase,
     currentQuestionIndex,
     answers,
+    guesses,
     setAnswer,
+    setGuess,
     nextQuestion,
   } = useAppStore();
 
@@ -42,15 +47,18 @@ export const useQuiz = (roomId: string) => {
       setAnswer(currentQuestion.id, selectedOption);
 
       // Submit answer to Firestore
-      await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption);
+      const roundId = room?.currentRoundId || `${Date.now()}`;
+      await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption, roundId);
 
       if (isLastQuestion) {
         // Batch submit all answers for reliability
+        const roundId = room?.currentRoundId || `${Date.now()}`;
         const allAnswers: Answer[] = Object.entries({
           ...answers,
           [currentQuestion.id]: selectedOption,
         }).map(([questionId, option]) => ({
           roomId,
+          roundId,
           userId: user.uid,
           questionId,
           selectedOption: option,
@@ -59,15 +67,15 @@ export const useQuiz = (roomId: string) => {
 
         await batchSubmitAnswers(allAnswers);
 
-        // Mark user as completed
-        await markCompleted(roomId, user.uid);
+        // Mark user as waiting for partner to finish Phase 1
+        await updateProgress(roomId, user.uid, questions.length, UserRoomStatus.WAITING_FOR_PARTNER);
 
-        // Progress index to trigger navigation
+        // Transition to end of Phase 1
         nextQuestion();
       } else {
         // Update progress
         const nextIndex = currentQuestionIndex + 1;
-        await updateProgress(roomId, user.uid, nextIndex);
+        await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.ANSWERING);
         nextQuestion();
       }
     },
@@ -80,16 +88,51 @@ export const useQuiz = (roomId: string) => {
       answers,
       setAnswer,
       nextQuestion,
+      room?.currentRoundId,
     ],
   );
 
+  const handleGuess = useCallback(
+    async (guessedOption: number) => {
+      if (!user || !currentQuestion) return;
+      setGuess(currentQuestion.id, guessedOption);
+      const roundId = room?.currentRoundId || `${Date.now()}`;
+      await submitGuess(roomId, user.uid, currentQuestion.id, guessedOption, roundId);
+
+      if (isLastQuestion) {
+        await markCompleted(roomId, user.uid);
+      } else {
+        const nextIndex = currentQuestionIndex + 1;
+        await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.GUESSING);
+      }
+    },
+    [
+      user,
+      currentQuestion,
+      currentQuestionIndex,
+      isLastQuestion,
+      roomId,
+      guesses,
+      setGuess,
+      room?.currentRoundId,
+    ],
+  );
+
+  const handleNext = useCallback(async () => {
+     nextQuestion();
+  }, [nextQuestion]);
+
   return {
+    quizPhase,
     currentQuestion,
     currentQuestionIndex,
     totalQuestions: questions.length,
     isLastQuestion,
     progress,
     answers,
+    guesses,
     handleAnswer,
+    handleGuess,
+    handleNext,
   };
 };
