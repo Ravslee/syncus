@@ -31,7 +31,8 @@ type Props = {
 
 export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const { roomId, categoryId } = route.params;
-  const { user, room, setQuestions, questions } = useAppStore();
+  const { user, room, partner, setQuestions, questions } = useAppStore();
+  const partnerName = partner?.displayName ? partner.displayName.split(' ')[0] : 'they';
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -165,7 +166,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={{ fontSize: 56, marginBottom: Spacing.xl }}>⏳</Text>
           <Text style={styles.waitingTitle}>You're fast!</Text>
           <Text style={styles.loadingText}>
-            Waiting for your partner to finish Phase 1...
+            Waiting for {partnerName} to finish Phase 1...
           </Text>
           <GlassCard style={{ marginTop: Spacing.xl, padding: Spacing.lg }}>
             <Text style={{ color: Colors.textSecondary, textAlign: 'center' }}>
@@ -193,66 +194,91 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenWrapper scrollable padded={false} style={{ backgroundColor: Colors.surfaceAccent }}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryEmoji}>{category?.icon}</Text>
-            <Text style={styles.categoryName}>
-              {quizPhase === 1 ? category?.name : 'Guess Your Partner'}
-            </Text>
-          </View>
 
-          {/* Progress Bar */}
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${progress * 100}%` },
-                  quizPhase === 2 && { backgroundColor: Colors.secondary },
-                ]}
-              />
+        <View style={{ backgroundColor: Colors.surfaceDark, flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor: Colors.surfaceAccent, borderBottomLeftRadius: 64, }}>
+            {/* Header */}
+            <View style={[styles.header, { justifyContent: 'flex-start' }]}>
+              <View style={styles.progressContainer}>
+                {
+                  [...Array(totalQuestions)].map((_, index) => (
+                    <View key={index} style={[styles.progressBar]}>
+                      {index < currentQuestionIndex + 1 && <View
+                        style={[
+                          styles.progressFill,
+
+                          quizPhase === 2 && { backgroundColor: Colors.surfaceAccent },
+                        ]}
+                      />}
+                    </View>
+                  ))
+                }
+              </View>
+
+              {/* <View style={styles.categoryBadge}>
+                <Text style={styles.categoryEmoji}>{category?.icon}</Text>
+                <Text style={[styles.categoryName, { opacity: 1 }]}>
+                  {quizPhase === 1 ? category?.name : category?.name + ' | Guess Your Partner'}
+                </Text>
+              </View> */}
+
+              {/* Progress Bar */}
+              {/* <View style={styles.progressContainer}>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${progress * 100}%` },
+                      quizPhase === 2 && { backgroundColor: Colors.secondary },
+                    ]}
+                  />
+                </View>
+
+              </View> */}
+
+
             </View>
 
+            {/* Partner Status */}
+            {quizPhase === 1 && (
+              <PartnerStatusOverlay
+                partnerStatus={partnerStatus}
+                totalQuestions={totalQuestions}
+              />
+            )}
+
+            {quizPhase === 2 && (
+              <Text
+                style={{
+                  // paddingVertical: Spacing.base,
+                  paddingHorizontal: Spacing.base,
+                  color: Colors.textMuted,
+                  marginBottom: Spacing.md,
+                  fontFamily: Typography.fontFamily.extrabold,
+                }}>
+                What did {partnerName.toUpperCase()} choose?
+              </Text>
+            )}
+
+
+
+            {/* Question */}
+            <View style={styles.questionSection}>
+              <Text style={styles.progressText}>
+                {currentQuestionIndex + 1} / {totalQuestions}
+              </Text>
+              <Text style={styles.questionText}>{currentQuestion.text}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Partner Status */}
-        {quizPhase === 1 && (
-          <PartnerStatusOverlay
-            partnerStatus={partnerStatus}
-            totalQuestions={totalQuestions}
-          />
-        )}
 
-        {quizPhase === 2 && (
-          <Text
-            style={{
-              color: Colors.textAccent,
-              marginBottom: Spacing.sm,
-              fontFamily: Typography.fontFamily.bold,
-            }}>
-            WHAT DID THEY CHOOSE?
-          </Text>
-        )}
-
-
-
-
-        {/* Question */}
-        <View style={{ backgroundColor: Colors.surfaceDark }}>
-          <View style={styles.questionSection}>
-            <Text style={styles.progressText}>
-              {currentQuestionIndex + 1} / {totalQuestions}
-            </Text>
-            <Text style={styles.questionText}>{currentQuestion.text}</Text>
-          </View>
-        </View>
 
 
 
         <View style={{
-          paddingHorizontal: Spacing.base, flex: 1,
+          flex: 1 / 2,
+          paddingHorizontal: Spacing.base,
           paddingVertical: Spacing.base,
           // borderTopLeftRadius: 10,
           borderTopRightRadius: 64,
@@ -293,11 +319,12 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
             })}
           </View>
 
-          {quizPhase === 2 && showNext && (
+          {quizPhase === 2 && (
             <GradientButton
-              style={{ marginTop: Spacing.xl }}
+              style={{ marginTop: Spacing.base, marginHorizontal: Spacing.base }}
               title={isLastQuestion ? 'Finish Game' : 'Next Question'}
               onPress={onNextClicked}
+              disabled={!showNext}
             />
           )}
 
@@ -307,7 +334,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
       </View>
 
-    </ScreenWrapper>
+    </ScreenWrapper >
   );
 };
 
@@ -343,12 +370,20 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.base,
+    alignSelf: 'flex-end',
+    marginTop: Spacing.base,
+    // backgroundColor: Colors.white,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    // position: 'absolute',
+    // top: 0,
+    // right: 0,
+    // borderRadius: BorderRadius.full,
+    // borderWidth: 1,
+    // borderColor: Colors.glassBorder,
+
+    // marginBottom: Spacing.base,
+    // marginRight: Spacing.base,
     fontFamily: Typography.fontFamily.bold,
   },
   categoryEmoji: {
@@ -356,32 +391,36 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   categoryName: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textAccent,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textMuted,
+    // opacity: 0.1,
+    // textTransform: 'uppercase',
     fontFamily: Typography.fontFamily.extrabold,
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     fontFamily: Typography.fontFamily.bold,
   },
   progressBar: {
     flex: 1,
     height: 6,
-    backgroundColor: Colors.surfaceAccent,
+    // flexDirection: 'column',
+    backgroundColor: Colors.surfaceDark,
     borderRadius: 3,
     overflow: 'hidden',
     fontFamily: Typography.fontFamily.bold,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    opacity: 0.6,
     borderRadius: 3,
     fontFamily: Typography.fontFamily.bold,
   },
   progressText: {
-    fontSize: Typography.fontSize.xs,
+    fontSize: Typography.fontSize['xl'],
     color: Colors.textMuted,
     minWidth: 40,
     textAlign: 'left',
@@ -389,25 +428,25 @@ const styles = StyleSheet.create({
   },
   questionSection: {
     // paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing['3xl'],
+    paddingVertical: Spacing.base,
     // marginTop: Spacing['2xl'],
     // marginBottom: Spacing['2xl'],
     fontFamily: Typography.fontFamily.bold,
-    paddingHorizontal: Spacing['4xl'],
+    paddingHorizontal: Spacing.base,
     backgroundColor: Colors.surfaceAccent,
-    borderBottomLeftRadius: 64,
+    // borderBottomLeftRadius: 64,
     // borderBottomRightRadius: 50,
   },
   questionText: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize['3xl'],
     color: Colors.textMuted,
-    lineHeight: 32,
-    fontFamily: Typography.fontFamily.displayBold,
+    // lineHeight: 32,
+    fontFamily: Typography.fontFamily.displayExtrabold,
   },
   options: {
     gap: 0,
     // flex: 1,
-    paddingTop: Spacing['3xl'],
+    paddingTop: Spacing['2xl'],
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
     // paddingBottom: Spacing['3xl'],

@@ -51,6 +51,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
     styles.text,
     styles[`text_${size}`],
     variant === 'outline' && styles.outlineText,
+    variant === 'secondary' && styles.secondaryText,
     disabled && styles.disabledText,
     textStyle as TextStyle,
   ].filter(Boolean) as TextStyle[];
@@ -136,6 +137,9 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: Colors.primary,
+  },
+  secondaryText: {
+    color: Colors.textAccent,
   },
 
   // States

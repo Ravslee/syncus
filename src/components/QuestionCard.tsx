@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     fontWeight: '500',
     textAlign: 'center',
   },

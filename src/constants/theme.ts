@@ -4,38 +4,39 @@
 // ============================================================
 
 export const Colors = {
-
+  // FF7F50
+  // 1E2B2F
   // Strict 2-Color Cinder & Flame Palette
-  primary: '#FF7F50',       // Flame
-  primaryLight: '#FF7F50',
-  primaryDark: '#1E2B2F',   // Cinder
+  primary: '#abc82a',       // Flame
+  primaryLight: '#abc82a',
+  primaryDark: '#1a2417',   // Cinder
 
 
   // Accent / gradient stops
-  accentPink: '#FF7F50',
-  accentCyan: '#1E2B2F',
-  accentMint: '#FF7F50',
-  accentOrange: '#FF7F50',
+  accentPink: '#abc82a',
+  accentCyan: '#1a2417',
+  accentMint: '#abc82a',
+  accentOrange: '#abc82a',
 
   // Background layers — Strict Cinder
-  background: '#1E2B2F',
-  backgroundLight: '#1E2B2F',
-  surface: '#1E2B2F',
+  background: '#1a2417',
+  backgroundLight: '#1a2417',
+  surface: '#1a2417',
   surfaceBgOpacity: '#293235ff',
-  surfaceLight: '#1E2B2F',
-  surfaceDark: '#1E2B2F',
-  surfaceAccent: '#FF7F50',
+  surfaceLight: '#1a2417',
+  surfaceDark: '#1a2417',
+  surfaceAccent: '#abc82a',
 
   // Card / glassmorphism
-  glass: '#1E2B2F',
-  glassBorder: '#FF7F50', // Solid Flame border
-  glassHighlight: '#FF7F50',
+  glass: '#1a2417',
+  glassBorder: '#abc82a', // Solid Flame border
+  glassHighlight: '#abc82a',
 
   // Text 
-  textPrimary: '#1E2B2F',   // White
+  textPrimary: '#1a2417',   // White
   textSecondary: '#FFFFFF', // White
-  textMuted: '#1E2B2F',     // Flame (as muted/secondary accent)
-  textAccent: '#FF7F50',    // Flame
+  textMuted: '#1a2417',     // Flame (as muted/secondary accent)
+  textAccent: '#abc82a',    // Flame
 
   // Status
   success: '#2A9D6F',
@@ -52,14 +53,14 @@ export const Colors = {
 };
 
 export const Gradients = {
-  primary: ['#FF7F50', '#FF7F50'] as [string, string],
-  primaryDiagonal: ['#1E2B2F', '#FF7F50'] as [string, string],
-  pinkPurple: ['#FF7F50', '#FF7F50'] as [string, string],
-  cyanPurple: ['#1E2B2F', '#1E2B2F'] as [string, string],
-  mintTeal: ['#FFFFFF', '#1E2B2F'] as [string, string],
-  orangeYellow: ['#FF7F50', '#FF7F50'] as [string, string],
-  background: ['#1E2B2F', '#1E2B2F'] as [string, string],
-  card: ['#1E2B2F', '#1E2B2F'] as [string, string],
+  primary: ['#abc82a', '#abc82a'] as [string, string],
+  primaryDiagonal: ['#1a2417', '#abc82a'] as [string, string],
+  pinkPurple: ['#abc82a', '#abc82a'] as [string, string],
+  cyanPurple: ['#1a2417', '#1a2417'] as [string, string],
+  mintTeal: ['#FFFFFF', '#1a2417'] as [string, string],
+  orangeYellow: ['#abc82a', '#abc82a'] as [string, string],
+  background: ['#1a2417', '#1a2417'] as [string, string],
+  card: ['#1a2417', '#1a2417'] as [string, string],
 };
 
 export const Typography = {
@@ -103,6 +104,9 @@ export const Typography = {
 };
 
 export const Spacing = {
+  xxxxs: 0.5,
+  xxxs: 1,
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -140,14 +144,14 @@ export const Shadows = {
     elevation: 4,
   },
   lg: {
-    shadowColor: '#FF7F50', // Flame shadow
+    shadowColor: '#abc82a', // Flame shadow
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
   },
   glow: {
-    shadowColor: '#FF7F50', // Flame glow
+    shadowColor: '#abc82a', // Flame glow
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
     shadowRadius: 18,

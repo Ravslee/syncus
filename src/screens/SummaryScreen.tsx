@@ -78,13 +78,31 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
         </View> */}
 
         {/* Insight */}
-        <GlassCard style={styles.insightCard} variant="elevated">
-          <Text style={styles.sectionTitle}>Detailed Breakdown</Text>
-          <Text style={styles.insightText}>See below for exactly what you guessed vs what {partnerName} actually chose.</Text>
+        {/* <GlassCard style={styles.insightCard} variant="elevated"> */}
+        {/* Category Breakdown */}
+        <GlassCard style={styles.categoryBreakdown} variant="elevated">
+          <Text style={styles.sectionTitle}>Sync Score</Text>
+          <View style={styles.catRow}>
+            <Text style={styles.catName}>
+              {category?.name}
+            </Text>
+            <Text style={styles.catScore}>{scorePerc}%</Text>
+          </View>
+          <View style={styles.catBar}>
+            <View
+              style={[styles.catBarFill, { width: `${scorePerc}%` }]}
+            />
+          </View>
         </GlassCard>
+        {/* <Text style={styles.sectionTitle}>
+          {category?.name}
+        </Text> */}
+        {/* <Text style={styles.sectionTitle}>Detailed Breakdown</Text>
+          <Text style={styles.insightText}>See below for exactly what you guessed vs what {partnerName} actually chose.</Text> */}
+        {/* </GlassCard> */}
 
         {/* Per-Question Breakdown */}
-        <Text style={styles.sectionTitle}>Question Breakdown</Text>
+        <Text style={styles.sectionTitle}>Details</Text>
         {results.breakdown.map((item, index) => {
           const question = SAMPLE_QUESTIONS.find(
             q => q.id === item.questionId,
@@ -98,9 +116,9 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
             <GlassCard
               key={item.questionId}
               style={styles.questionRow}
-              variant={match ? 'default' : 'subtle'}>
+              variant={'elevated'}>
               <View style={styles.questionHeader}>
-                <Text style={styles.questionNumber}>Q{index + 1}</Text>
+                {/* <Text style={styles.questionNumber}>Q{index + 1}</Text> */}
                 <View
                   style={[
                     styles.matchBadge,
@@ -132,34 +150,22 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
           );
         })}
 
-        {/* Category Breakdown */}
-        <GlassCard style={styles.categoryBreakdown} variant="elevated">
-          <Text style={styles.sectionTitle}>📊 Category Accuracy</Text>
-          <View style={styles.catRow}>
-            <Text style={styles.catName}>
-              {category?.icon} {category?.name}
-            </Text>
-            <Text style={styles.catScore}>{scorePerc}%</Text>
-          </View>
-          <View style={styles.catBar}>
-            <View
-              style={[styles.catBarFill, { width: `${scorePerc}%` }]}
-            />
-          </View>
-        </GlassCard>
+
 
         {/* Actions */}
         <View style={styles.actions}>
           <GradientButton
-            title="Share Results 📤"
+            title="Share Results"
             onPress={handleShare}
             size="lg"
+            variant="secondary"
+
             style={styles.actionButton}
           />
           <GradientButton
             title="Play Again"
             onPress={handlePlayAgain}
-            variant="secondary"
+            variant="primary"
             size="lg"
             style={styles.actionButton}
           />
@@ -206,6 +212,14 @@ const styles = StyleSheet.create({
   },
   questionRow: {
     marginBottom: Spacing.md,
+    padding: 16,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    overflow: 'hidden',
+
+    backgroundColor: Colors.primary,
+    color: Colors.textMuted,
   },
   questionHeader: {
     flexDirection: 'row',
@@ -215,7 +229,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
   questionNumber: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.lg,
     color: Colors.textAccent,
     fontFamily: Typography.fontFamily.bold,
   },
@@ -229,9 +243,9 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
   questionText: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textAccent,
-    fontFamily: Typography.fontFamily.semibold,
+    fontSize: Typography.fontSize.lg,
+    color: Colors.textMuted,
+    fontFamily: Typography.fontFamily.displayExtrabold,
     marginBottom: Spacing.md,
   },
   answersRow: {
@@ -240,14 +254,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   answerLabel: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textAccent,
-    opacity: 0.7,
-    fontFamily: Typography.fontFamily.semibold,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textPrimary,
+    // opacity: 0.7,
+    fontFamily: Typography.fontFamily.displayExtrabold
   },
   answerValue: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textAccent,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textPrimary,
     fontFamily: Typography.fontFamily.bold,
   },
   categoryBreakdown: {
@@ -262,7 +276,7 @@ const styles = StyleSheet.create({
   },
   catName: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.semibold,
   },
   catScore: {
@@ -282,7 +296,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   actions: {
-    gap: Spacing.md,
+    marginTop: Spacing.base,
+    gap: Spacing.base,
   },
   actionButton: {
     width: '100%',

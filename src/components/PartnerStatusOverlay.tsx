@@ -3,9 +3,10 @@
 // ============================================================
 
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import {Colors, BorderRadius, Typography} from '../constants/theme';
-import {RoomState, UserRoomStatus} from '../types';
+import { View, Text, StyleSheet } from 'react-native';
+import { Colors, BorderRadius, Typography, Spacing } from '../constants/theme';
+import { RoomState, UserRoomStatus } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface PartnerStatusOverlayProps {
   partnerStatus: RoomState | null;
@@ -16,20 +17,23 @@ export const PartnerStatusOverlay: React.FC<PartnerStatusOverlayProps> = ({
   partnerStatus,
   totalQuestions,
 }) => {
+  const { partner } = useAppStore();
+  const partnerName = partner?.displayName ? partner.displayName.split(' ')[0] : 'Partner';
+
   const getStatusText = () => {
     if (!partnerStatus) {
-      return 'Waiting for partner to join...';
+      return `Waiting for ${partnerName}...`;
     }
 
     switch (partnerStatus.status) {
       case UserRoomStatus.JOINED:
-        return 'Your partner is getting ready...';
+        return `${partnerName} is getting ready...`;
       case UserRoomStatus.ANSWERING:
-        return `Your partner is on question ${partnerStatus.currentQuestionIndex + 1} of ${totalQuestions}`;
+        return `${partnerName}: Question ${partnerStatus.currentQuestionIndex + 1}/${totalQuestions}`;
       case UserRoomStatus.COMPLETED:
-        return 'Your partner has finished! 🎉';
+        return `${partnerName} has finished!`;
       default:
-        return 'Syncing with partner...';
+        return `Syncing with ${partnerName}...`;
     }
   };
 
@@ -49,7 +53,7 @@ export const PartnerStatusOverlay: React.FC<PartnerStatusOverlayProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.dot, {backgroundColor: getStatusColor()}]} />
+      <View style={[styles.dot, { backgroundColor: getStatusColor() }]} />
       <Text style={styles.text}>{getStatusText()}</Text>
     </View>
   );
@@ -60,12 +64,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.full,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    alignSelf: 'center',
+    // borderRadius: BorderRadius.full,
+    borderBottomLeftRadius: BorderRadius.full,
+    borderTopLeftRadius: BorderRadius.full,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    // borderWidth: 1,
+    // borderColor: Colors.glassBorder,
+    alignSelf: 'flex-end',
   },
   dot: {
     width: 8,
@@ -74,8 +80,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   text: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textAccent,
     fontWeight: '500',
+    fontFamily: Typography.fontFamily.medium,
   },
 });

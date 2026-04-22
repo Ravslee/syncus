@@ -122,10 +122,10 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       {/* Header Bar */}
       <View style={styles.topBar}>
         <View>
-          <Text style={styles.greeting}>
+          {/* <Text style={styles.greeting}>
             Hey, {user?.displayName ?? 'there'}
-          </Text>
-          <Text style={styles.appBadge}>SyncUs Room</Text>
+          </Text> */}
+          <Text style={styles.appBadge}>Syncus</Text>
         </View>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
           <Icon name="dots-vertical" size={28} color={Colors.textPrimary} />
@@ -148,21 +148,20 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       </Modal>
 
       <View style={styles.container}>
-        <Text style={styles.badge}>CHOOSE A VIBE</Text>
         <Text style={styles.title}>A little quiz, a lot of discovery</Text>
 
         <Text style={styles.subtitle}>
-          You are paired with <Text style={styles.partnerName}>{partnerName}</Text>. Select a category to start your daily sync!
+          You are paired with <Text style={styles.partnerName}>{partnerName}</Text>. Pick a vibe below to test your connection!
         </Text>
 
         {/* Category Grid */}
         <View style={styles.grid}>
           {(() => {
-            const isQuizLive = 
-              partnerStatus?.status === UserRoomStatus.ANSWERING || 
-              partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER || 
+            const isQuizLive =
+              partnerStatus?.status === UserRoomStatus.ANSWERING ||
+              partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
               partnerStatus?.status === UserRoomStatus.GUESSING;
-              
+
             const activeCategoryId = isQuizLive ? room?.categoryId : null;
 
             return CATEGORIES.map(category => (
@@ -178,7 +177,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <GradientButton
-          title="Start Quiz"
+          title="Play"
           onPress={handleStart}
           disabled={!selectedCategory}
           loading={loading}
@@ -203,8 +202,8 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   appBadge: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.textPrimary,
+    fontSize: Typography.fontSize['2xl'],
+    color: Colors.textAccent,
     letterSpacing: 0.5,
     fontFamily: Typography.fontFamily.extrabold,
   },
@@ -257,7 +256,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     // fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     marginBottom: Spacing.sm,
     fontFamily: Typography.fontFamily.bold,
   },
