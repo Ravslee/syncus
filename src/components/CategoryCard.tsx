@@ -11,12 +11,14 @@ interface CategoryCardProps {
   category: Category;
   onPress: (category: Category) => void;
   selected?: boolean;
+  isActiveQuiz?: boolean;
 }
 
 export const CategoryCard: React.FC<CategoryCardProps> = ({
   category,
   onPress,
   selected = false,
+  isActiveQuiz = false,
 }) => {
   return (
     <TouchableOpacity
@@ -34,13 +36,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         ]}>
         <Text style={styles.icon}>{category.icon}</Text>
       </View>
-      <Text style={styles.name}>{category.name}</Text>
-      <Text style={styles.description} numberOfLines={2}>
-        {category.description}
-      </Text>
-      {selected && (
-        <View style={[styles.badge, { backgroundColor: Colors.primary }]}>
-          <Text style={styles.badgeText}>Selected</Text>
+      <Text style={[styles.name, selected && { color: Colors.surfaceDark }]}>{category.name}</Text>
+      {isActiveQuiz && (
+        <View style={[styles.activeBadge, { backgroundColor: selected ? Colors.surface : Colors.primary }]}>
+          <Text style={[styles.activeBadgeText, { color: selected ? Colors.primary : Colors.textPrimary }]}>LIVE</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -51,14 +50,16 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
+    borderWidth: 0,
     padding: 16,
     width: '47%',
     marginBottom: 14,
     ...Shadows.sm,
   },
   selected: {
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: Colors.surfaceAccent,
+    color: Colors.surfaceDark,
+
   },
   iconContainer: {
     width: 48,
@@ -73,27 +74,27 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     marginBottom: 4,
     fontFamily: Typography.fontFamily.bold,
   },
   description: {
     fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     lineHeight: 16,
     fontFamily: Typography.fontFamily.semibold,
   },
-  badge: {
+  activeBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: BorderRadius.full,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.md,
   },
-  badgeText: {
-    fontSize: 10,
-    color: Colors.white,
+  activeBadgeText: {
+    fontSize: 9,
     fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 1,
   },
 });

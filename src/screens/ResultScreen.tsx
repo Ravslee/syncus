@@ -143,48 +143,49 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   const myPerc = Math.round((myScore / total) * 100);
 
   return (
-    <ScreenWrapper scrollable>
+    <ScreenWrapper scrollable style={{ flex: 1, justifyContent: "center" }}>
       <View style={styles.container}>
         <Text style={styles.resultBadge}>
-          {category?.icon} {category?.name}
+          {category?.name}
         </Text>
 
-        <View style={styles.scoreContainer}>
-          <View style={styles.scoreBox}>
-            <Text style={styles.playerName}>{user?.displayName?.split(' ')[0] || 'You'}</Text>
-            <Text style={styles.resultTitle}>{myScore}/{total}</Text>
-          </View>
-          
-          <Text style={styles.resultSync}>vs</Text>
-          
-          <View style={styles.scoreBox}>
-            <Text style={styles.playerName}>{partnerName.split(' ')[0]}</Text>
-            <Text style={styles.resultTitle}>{partnerScore}/{total}</Text>
-          </View>
-        </View>
 
         <CircularProgress
           percentage={myPerc}
           size={200}
           strokeWidth={14}
           color={Colors.primary}
-          label="Your Accuracy"
         />
 
         <Text style={styles.compatLabel}>
-          {myScore > partnerScore ? 'You know them better! 🎉' : partnerScore > myScore ? 'They know you better! 😅' : 'Its a tie! 🤝'}
+          {myScore > partnerScore ? 'You know them better!' : partnerScore > myScore ? 'They know you better!' : 'Its a tie!'}
         </Text>
 
         <GlassCard style={styles.insightCard} variant="elevated">
-          <Text style={styles.insightTitle}>How did you do?</Text>
+
+          <View style={styles.scoreContainer}>
+            <View style={styles.scoreBox}>
+              <Text style={styles.playerName}>{user?.displayName?.split(' ')[0] || 'You'}</Text>
+              <Text style={styles.resultTitle}>{myScore}/{total}</Text>
+            </View>
+
+            <Text style={styles.resultSync}>vs</Text>
+
+            <View style={styles.scoreBox}>
+              <Text style={styles.playerName}>{partnerName.split(' ')[0]}</Text>
+              <Text style={styles.resultTitle}>{partnerScore}/{total}</Text>
+            </View>
+          </View>
+
+          {/* <Text style={styles.insightTitle}>How did you do?</Text>
           <Text style={styles.insightText}>
              You correctly guessed {myScore} out of {total} of your partner's answers.
              Your partner correctly guessed {partnerScore} of yours.
-          </Text>
+          </Text> */}
         </GlassCard>
 
         {/* Breakdown Preview */}
-        <GlassCard style={styles.breakdownCard}>
+        {/* <GlassCard style={styles.breakdownCard}>
           <Text style={styles.breakdownTitle}>Quick Breakdown</Text>
           <View style={styles.breakdownStats}>
             <View style={styles.breakdownItem}>
@@ -208,10 +209,10 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={styles.breakdownLabel}>Questions</Text>
             </View>
           </View>
-        </GlassCard>
+        </GlassCard> */}
 
         <GradientButton
-          title="View Full Summary"
+          title="View Details"
           onPress={() => navigation.replace('Summary', { roomId })}
           size="lg"
           style={styles.summaryButton}
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   revealButton: { width: '80%' },
   // Results
   resultBadge: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize['xl'],
     color: Colors.textAccent,
     fontWeight: '600',
     marginBottom: Spacing.base,
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   },
   playerName: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.bold,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
   },
   resultTitle: {
     fontSize: Typography.fontSize['4xl'],
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.displayExtrabold,
   },
   resultSync: {

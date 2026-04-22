@@ -14,6 +14,7 @@ import { RootStackParamList, Category, UserRoomStatus } from '../types';
 import { CATEGORIES } from '../constants';
 import { updateRoomCategory } from '../services/roomService';
 import { useAppStore } from '../store/useAppStore';
+import { usePartnerStatus } from '../hooks/usePartnerStatus';
 import { db } from '../services/firebase';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -23,6 +24,7 @@ type Props = {
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { user, room, resetQuiz, leaveRoom } = useAppStore();
+  const { partnerStatus } = usePartnerStatus(room?.id);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
   const [partnerName, setPartnerName] = useState<string>('your partner');
@@ -121,7 +123,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.topBar}>
         <View>
           <Text style={styles.greeting}>
-            Hey, {user?.displayName ?? 'there'} 👋
+            Hey, {user?.displayName ?? 'there'}
           </Text>
           <Text style={styles.appBadge}>SyncUs Room</Text>
         </View>
@@ -155,14 +157,24 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* Category Grid */}
         <View style={styles.grid}>
-          {CATEGORIES.map(category => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              onPress={handleSelect}
-              selected={selectedCategory?.id === category.id}
-            />
-          ))}
+          {(() => {
+            const isQuizLive = 
+              partnerStatus?.status === UserRoomStatus.ANSWERING || 
+              partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER || 
+              partnerStatus?.status === UserRoomStatus.GUESSING;
+              
+            const activeCategoryId = isQuizLive ? room?.categoryId : null;
+
+            return CATEGORIES.map(category => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                onPress={handleSelect}
+                selected={selectedCategory?.id === category.id}
+                isActiveQuiz={activeCategoryId === category.id}
+              />
+            ));
+          })()}
         </View>
 
         <GradientButton

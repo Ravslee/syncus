@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
 
   // Text
   text: {
-    color: Colors.white,
+    color: Colors.primaryDark,
     textAlign: 'center',
     fontFamily: Typography.fontFamily.displayExtrabold,
   },

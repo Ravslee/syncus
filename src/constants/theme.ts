@@ -4,41 +4,38 @@
 // ============================================================
 
 export const Colors = {
-  // Primary palette — sakura petal pink (saturated for light bg)
-  // primary: '#C25070',
-  primary: '#E879A8',
-  // primary: '#F9A8D4',
 
-  primaryLight: '#E88FA8',
-  primaryDark: '#8B3050',
+  // Strict 2-Color Cinder & Flame Palette
+  primary: '#FF7F50',       // Flame
+  primaryLight: '#FF7F50',
+  primaryDark: '#1E2B2F',   // Cinder
 
 
+  // Accent / gradient stops
+  accentPink: '#FF7F50',
+  accentCyan: '#1E2B2F',
+  accentMint: '#FF7F50',
+  accentOrange: '#FF7F50',
 
-  // Accent / gradient stops — from image
-  accentPink: '#F2A5BE',    // medium petal pink
-  accentCyan: '#8B5E4A',    // warm bark brown (branch color)
-  accentMint: '#E0D0D4',    // pale petal border
-  accentOrange: '#D4748C',  // deeper petal warmth
+  // Background layers — Strict Cinder
+  background: '#1E2B2F',
+  backgroundLight: '#1E2B2F',
+  surface: '#1E2B2F',
+  surfaceBgOpacity: '#293235ff',
+  surfaceLight: '#1E2B2F',
+  surfaceDark: '#1E2B2F',
+  surfaceAccent: '#FF7F50',
 
-  // Background layers — light pale blush (matches image)
-  background: '#FFF0F3',
-  backgroundLight: '#FFE4EB',
-  surface: '#FDD8E3',
-  surfaceLight: '#F9C8D6',
-  surfaceDark: '#C25070',
+  // Card / glassmorphism
+  glass: '#1E2B2F',
+  glassBorder: '#FF7F50', // Solid Flame border
+  glassHighlight: '#FF7F50',
 
-
-  // Card / glassmorphism (light mode)
-  glass: 'rgba(255, 255, 255, 0.6)',
-  glassBorder: 'rgba(194, 80, 112, 0.18)',
-
-  glassHighlight: 'rgba(255, 255, 255, 0.75)',
-
-  // Text (dark for light background)
-  textPrimary: '#3A1520',
-  textSecondary: '#6B3448',
-  textMuted: '#9E6070',
-  textAccent: '#C25070',
+  // Text 
+  textPrimary: '#1E2B2F',   // White
+  textSecondary: '#FFFFFF', // White
+  textMuted: '#1E2B2F',     // Flame (as muted/secondary accent)
+  textAccent: '#FF7F50',    // Flame
 
   // Status
   success: '#2A9D6F',
@@ -55,14 +52,14 @@ export const Colors = {
 };
 
 export const Gradients = {
-  primary: ['#C25070', '#E88FA8'] as [string, string],
-  primaryDiagonal: ['#8B3050', '#C25070'] as [string, string],
-  pinkPurple: ['#D4748C', '#C25070'] as [string, string],
-  cyanPurple: ['#8B5E4A', '#C25070'] as [string, string],
-  mintTeal: ['#E88FA8', '#F2A5BE'] as [string, string],
-  orangeYellow: ['#D4748C', '#E88FA8'] as [string, string],
-  background: ['#FFF0F3', '#FFE4EB'] as [string, string],
-  card: ['rgba(255, 240, 243, 0.85)', 'rgba(253, 216, 227, 0.7)'] as [string, string],
+  primary: ['#FF7F50', '#FF7F50'] as [string, string],
+  primaryDiagonal: ['#1E2B2F', '#FF7F50'] as [string, string],
+  pinkPurple: ['#FF7F50', '#FF7F50'] as [string, string],
+  cyanPurple: ['#1E2B2F', '#1E2B2F'] as [string, string],
+  mintTeal: ['#FFFFFF', '#1E2B2F'] as [string, string],
+  orangeYellow: ['#FF7F50', '#FF7F50'] as [string, string],
+  background: ['#1E2B2F', '#1E2B2F'] as [string, string],
+  card: ['#1E2B2F', '#1E2B2F'] as [string, string],
 };
 
 export const Typography = {
@@ -133,7 +130,7 @@ export const Shadows = {
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 10,
   },
   md: {
     shadowColor: '#000',
@@ -143,14 +140,14 @@ export const Shadows = {
     elevation: 4,
   },
   lg: {
-    shadowColor: '#C25070',
+    shadowColor: '#FF7F50', // Flame shadow
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
   },
   glow: {
-    shadowColor: '#E88FA8',
+    shadowColor: '#FF7F50', // Flame glow
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
     shadowRadius: 18,

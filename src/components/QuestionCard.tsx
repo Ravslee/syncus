@@ -56,12 +56,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       ]}>
         {option}
       </Text>
-      {selected && !isCorrect && !isWrong && (
+      {/* {selected && !isCorrect && !isWrong && (
         <View style={styles.check}>
           <Text style={styles.checkText}>✓</Text>
         </View>
-      )}
-      {isCorrect && (
+      )} */}
+      {/* {isCorrect && (
         <View style={[styles.check, { backgroundColor: Colors.success }]}>
           <Text style={styles.checkText}>✓</Text>
         </View>
@@ -70,7 +70,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         <View style={[styles.check, { backgroundColor: Colors.error }]}>
           <Text style={styles.checkText}>✗</Text>
         </View>
-      )}
+      )} */}
     </TouchableOpacity>
   );
 };
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    // backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface, // Bring back surface background
     borderRadius: BorderRadius.lg,
-    borderWidth: 4,
+    borderWidth: 2,
     borderColor: Colors.glassBorder,
     padding: 16,
     marginBottom: 12,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   optionTextSelected: {
-    color: Colors.primaryDark,
+    color: Colors.textAccent,
     fontWeight: '600',
   },
   optionTextCorrect: {

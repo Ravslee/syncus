@@ -24,7 +24,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   size = 180,
   strokeWidth = 12,
   color = Colors.primary,
-  bgColor = Colors.surface,
+  bgColor = Colors.surfaceBgOpacity,
   animated = true,
   label,
 }) => {
@@ -115,12 +115,12 @@ const styles = StyleSheet.create({
   },
   percentage: {
     fontSize: Typography.fontSize['4xl'],
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.displayExtrabold,
   },
   label: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     marginTop: 4,
     fontFamily: Typography.fontFamily.displayBold,
   },

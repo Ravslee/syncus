@@ -191,7 +191,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const actAnswer = quizPhase === 2 ? partnerAnswers[currentQuestion.id] : null;
 
   return (
-    <ScreenWrapper scrollable padded={false} style={{}}>
+    <ScreenWrapper scrollable padded={false} style={{ backgroundColor: Colors.surfaceAccent }}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -213,9 +213,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
                 ]}
               />
             </View>
-            <Text style={styles.progressText}>
-              {currentQuestionIndex + 1} / {totalQuestions}
-            </Text>
+
           </View>
         </View>
 
@@ -242,17 +240,26 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
 
         {/* Question */}
-        <View style={styles.questionSection}>
-          <Text style={styles.questionText}>{currentQuestion.text}</Text>
+        <View style={{ backgroundColor: Colors.surfaceDark }}>
+          <View style={styles.questionSection}>
+            <Text style={styles.progressText}>
+              {currentQuestionIndex + 1} / {totalQuestions}
+            </Text>
+            <Text style={styles.questionText}>{currentQuestion.text}</Text>
+          </View>
         </View>
 
+
+
         <View style={{
-          flex: 1, backgroundColor: Colors.surface, paddingVertical: Spacing.base,
-          borderTopLeftRadius: 50,
-          borderTopRightRadius: 50,
+          paddingHorizontal: Spacing.base, flex: 1,
+          paddingVertical: Spacing.base,
+          // borderTopLeftRadius: 10,
+          borderTopRightRadius: 64,
+          backgroundColor: Colors.surfaceDark,
+          // backgroundColor: 'red'
+
         }}>
-
-
           {/* Options */}
           <View style={styles.options}>
             {currentQuestion.options.map((option, index) => {
@@ -293,8 +300,13 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
               onPress={onNextClicked}
             />
           )}
+
         </View>
+
+
+
       </View>
+
     </ScreenWrapper>
   );
 };
@@ -302,12 +314,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     paddingTop: Spacing.base,
-    backgroundColor: Colors.black,
-    // backgroundColor: Colors.divider,
-
-    // paddingBottom: Spacing['3xl'],
     flex: 1,
-
   },
   loadingContainer: {
     flex: 1,
@@ -329,6 +336,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
+    paddingHorizontal: Spacing.base,
     marginBottom: Spacing.xl,
     fontFamily: Typography.fontFamily.bold,
   },
@@ -361,14 +369,14 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 6,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceAccent,
     borderRadius: 3,
     overflow: 'hidden',
     fontFamily: Typography.fontFamily.bold,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryDark,
     borderRadius: 3,
     fontFamily: Typography.fontFamily.bold,
   },
@@ -376,28 +384,33 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xs,
     color: Colors.textMuted,
     minWidth: 40,
-    textAlign: 'right',
+    textAlign: 'left',
     fontFamily: Typography.fontFamily.bold,
   },
   questionSection: {
-    paddingHorizontal: Spacing.base,
-    marginTop: Spacing['2xl'],
-    marginBottom: Spacing['2xl'],
+    // paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing['3xl'],
+    // marginTop: Spacing['2xl'],
+    // marginBottom: Spacing['2xl'],
     fontFamily: Typography.fontFamily.bold,
-    backgroundColor: Colors.black,
-    color: Colors.white,
+    paddingHorizontal: Spacing['4xl'],
+    backgroundColor: Colors.surfaceAccent,
+    borderBottomLeftRadius: 64,
+    // borderBottomRightRadius: 50,
   },
   questionText: {
     fontSize: Typography.fontSize.xl,
-    color: Colors.white,
+    color: Colors.textMuted,
     lineHeight: 32,
     fontFamily: Typography.fontFamily.displayBold,
   },
   options: {
     gap: 0,
-    flex: 1,
+    // flex: 1,
+    paddingTop: Spacing['3xl'],
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
+    // paddingBottom: Spacing['3xl'],
 
     // backgroundColor: Colors.surface,
   },
