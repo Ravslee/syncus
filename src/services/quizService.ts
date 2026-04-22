@@ -48,11 +48,13 @@ export const submitAnswer = async (
   questionId: string,
   selectedOption: number,
   roundId: string,
+  categoryId: string,
 ): Promise<void> => {
-  const answerId = `${roomId}__${roundId}__${userId}__${questionId}`;
+  const answerId = `${roomId}__${categoryId}__${userId}__${questionId}`;
   const answer: Answer = {
     roomId,
     roundId,
+    categoryId,
     userId,
     questionId,
     selectedOption,
@@ -67,8 +69,9 @@ export const submitGuess = async (
   questionId: string,
   guessedOption: number,
   roundId: string,
+  categoryId: string,
 ): Promise<void> => {
-  const answerId = `${roomId}__${roundId}__${userId}__${questionId}`;
+  const answerId = `${roomId}__${categoryId}__${userId}__${questionId}`;
   await db.answers().doc(answerId).update({
     guessedOption,
   });
@@ -83,7 +86,7 @@ export const batchSubmitAnswers = async (
   const batch = firestore().batch();
 
   answers.forEach(answer => {
-    const answerId = `${answer.roomId}__${answer.roundId}__${answer.userId}__${answer.questionId}`;
+    const answerId = `${answer.roomId}__${answer.categoryId}__${answer.userId}__${answer.questionId}`;
     const ref = db.answers().doc(answerId);
     batch.set(ref, answer);
   });
@@ -130,13 +133,14 @@ export const markCompleted = async (
 export const fetchUserAnswers = async (
   roomId: string,
   userId: string,
-  roundId: string,
+  categoryId: string,
 ): Promise<Answer[]> => {
+  console.log('Fetching answers for room:', roomId, 'user:', userId, 'category:', categoryId);
   const snapshot = await db
     .answers()
     .where('roomId', '==', roomId)
-    .where('roundId', '==', roundId)
     .where('userId', '==', userId)
+    .where('categoryId', '==', categoryId)
     .get();
 
   return snapshot.docs.map(doc => doc.data() as Answer);
@@ -148,12 +152,18 @@ export const fetchUserAnswers = async (
 export const clearRoomAnswers = async (
   roomId: string,
   userId: string,
+  categoryId?: string,
 ): Promise<void> => {
-  const snapshot = await db
+  let query = db
     .answers()
     .where('roomId', '==', roomId)
-    .where('userId', '==', userId)
-    .get();
+    .where('userId', '==', userId);
+
+  if (categoryId) {
+    query = query.where('categoryId', '==', categoryId);
+  }
+
+  const snapshot = await query.get();
 
   const batch = firestore().batch();
   snapshot.docs.forEach(doc => {

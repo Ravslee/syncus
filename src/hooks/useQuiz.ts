@@ -13,7 +13,7 @@ import {
 } from '../services/quizService';
 import { Answer, UserRoomStatus } from '../types';
 
-export const useQuiz = (roomId: string) => {
+export const useQuiz = (roomId: string, categoryId: string) => {
   const {
     user,
     room,
@@ -47,12 +47,12 @@ export const useQuiz = (roomId: string) => {
       setAnswer(currentQuestion.id, selectedOption);
 
       // Submit answer to Firestore
-      const roundId = room?.currentRoundId || `${Date.now()}`;
-      await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption, roundId);
+      const roundId = room?.currentRoundId || 'legacy_round';
+      await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption, roundId, categoryId);
 
       if (isLastQuestion) {
         // Batch submit all answers for reliability
-        const roundId = room?.currentRoundId || `${Date.now()}`;
+        const roundId = room?.currentRoundId || 'legacy_round';
         const allAnswers: Answer[] = Object.entries({
           ...answers,
           [currentQuestion.id]: selectedOption,
@@ -61,6 +61,7 @@ export const useQuiz = (roomId: string) => {
           roundId,
           userId: user.uid,
           questionId,
+          categoryId,
           selectedOption: option,
           createdAt: Date.now(),
         }));
@@ -96,8 +97,8 @@ export const useQuiz = (roomId: string) => {
     async (guessedOption: number) => {
       if (!user || !currentQuestion) return;
       setGuess(currentQuestion.id, guessedOption);
-      const roundId = room?.currentRoundId || `${Date.now()}`;
-      await submitGuess(roomId, user.uid, currentQuestion.id, guessedOption, roundId);
+      const roundId = room?.currentRoundId || 'legacy_round';
+      await submitGuess(roomId, user.uid, currentQuestion.id, guessedOption, roundId, categoryId);
 
       if (isLastQuestion) {
         await markCompleted(roomId, user.uid);

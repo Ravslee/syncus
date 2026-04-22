@@ -51,7 +51,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
     handleAnswer,
     handleGuess,
     handleNext,
-  } = useQuiz(roomId);
+  } = useQuiz(roomId, categoryId);
 
   const { partnerStatus } = usePartnerStatus(roomId);
 
@@ -88,9 +88,8 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
           try {
             const { fetchUserAnswers } = await import('../services/quizService');
             const partnerId = room?.users.find(id => id !== user?.uid);
-            const roundId = room?.currentRoundId || '';
             if (partnerId) {
-              const answersMap = await fetchUserAnswers(roomId, partnerId, roundId);
+              const answersMap = await fetchUserAnswers(roomId, partnerId, categoryId);
               const map: Record<string, number> = {};
               answersMap.forEach(a => (map[a.questionId] = a.selectedOption));
               setPartnerAnswers(map);
@@ -192,7 +191,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const actAnswer = quizPhase === 2 ? partnerAnswers[currentQuestion.id] : null;
 
   return (
-    <ScreenWrapper scrollable>
+    <ScreenWrapper scrollable padded={false} style={{}}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -239,52 +238,62 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
           </Text>
         )}
 
+
+
+
         {/* Question */}
         <View style={styles.questionSection}>
           <Text style={styles.questionText}>{currentQuestion.text}</Text>
         </View>
 
-        {/* Options */}
-        <View style={styles.options}>
-          {currentQuestion.options.map((option, index) => {
-            const isCurrentlySelected = selectedOption === index;
-            // Phase 2 validation calculations
-            let isCorrect = false;
-            let isWrong = false;
+        <View style={{
+          flex: 1, backgroundColor: Colors.surface, paddingVertical: Spacing.base,
+          borderTopLeftRadius: 50,
+          borderTopRightRadius: 50,
+        }}>
 
-            if (quizPhase === 2 && showNext) {
-              const partnerChose = actAnswer === index;
-              if (isCurrentlySelected && partnerChose) {
-                isCorrect = true;
-              } else if (isCurrentlySelected && !partnerChose) {
-                isWrong = false; // user picked it and it was wrong
-                isWrong = true;
-              } else if (partnerChose) {
-                isCorrect = true; // highlight actual answer green even if they didn't pick it
+
+          {/* Options */}
+          <View style={styles.options}>
+            {currentQuestion.options.map((option, index) => {
+              const isCurrentlySelected = selectedOption === index;
+              // Phase 2 validation calculations
+              let isCorrect = false;
+              let isWrong = false;
+
+              if (quizPhase === 2 && showNext) {
+                const partnerChose = actAnswer === index;
+                if (isCurrentlySelected && partnerChose) {
+                  isCorrect = true;
+                } else if (isCurrentlySelected && !partnerChose) {
+                  isWrong = true;
+                } else if (partnerChose) {
+                  isCorrect = true; // highlight actual answer green even if they didn't pick it
+                }
               }
-            }
 
-            return (
-              <QuestionCard
-                key={index}
-                option={option}
-                index={index}
-                selected={isCurrentlySelected}
-                isCorrect={isCorrect}
-                isWrong={isWrong}
-                onPress={submitting || showNext ? () => {} : onOptionSelect}
-              />
-            );
-          })}
+              return (
+                <QuestionCard
+                  key={index}
+                  option={option}
+                  index={index}
+                  selected={isCurrentlySelected}
+                  isCorrect={isCorrect}
+                  isWrong={isWrong}
+                  onPress={submitting || showNext ? () => { } : onOptionSelect}
+                />
+              );
+            })}
+          </View>
+
+          {quizPhase === 2 && showNext && (
+            <GradientButton
+              style={{ marginTop: Spacing.xl }}
+              title={isLastQuestion ? 'Finish Game' : 'Next Question'}
+              onPress={onNextClicked}
+            />
+          )}
         </View>
-
-        {quizPhase === 2 && showNext && (
-          <GradientButton
-            style={{ marginTop: Spacing.xl }}
-            title={isLastQuestion ? 'Finish Game' : 'Next Question'}
-            onPress={onNextClicked}
-          />
-        )}
       </View>
     </ScreenWrapper>
   );
@@ -293,7 +302,12 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     paddingTop: Spacing.base,
-    paddingBottom: Spacing['3xl'],
+    backgroundColor: Colors.black,
+    // backgroundColor: Colors.divider,
+
+    // paddingBottom: Spacing['3xl'],
+    flex: 1,
+
   },
   loadingContainer: {
     flex: 1,
@@ -366,17 +380,25 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
   questionSection: {
+    paddingHorizontal: Spacing.base,
     marginTop: Spacing['2xl'],
     marginBottom: Spacing['2xl'],
     fontFamily: Typography.fontFamily.bold,
+    backgroundColor: Colors.black,
+    color: Colors.white,
   },
   questionText: {
     fontSize: Typography.fontSize.xl,
-    color: Colors.textPrimary,
+    color: Colors.white,
     lineHeight: 32,
     fontFamily: Typography.fontFamily.displayBold,
   },
   options: {
     gap: 0,
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+
+    // backgroundColor: Colors.surface,
   },
 });

@@ -17,6 +17,7 @@ import { useResults } from '../hooks/useResults';
 import { useAppStore } from '../store/useAppStore';
 import { getCompatibilityLabel, getInsightText } from '../utils/formatters';
 import { CATEGORIES, SAMPLE_QUESTIONS } from '../constants';
+import { db } from '../services/firebase';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Result'>;
@@ -29,6 +30,26 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   const { results, loading, error, generateResults } = useResults(roomId);
   const { user, room } = useAppStore();
   const [revealed, setRevealed] = useState(false);
+  const [partnerName, setPartnerName] = useState<string>('partner');
+
+  // Fetch partner name
+  useEffect(() => {
+    const fetchPartner = async () => {
+      if (!room || !user) return;
+      const partnerId = room.users.find(id => id !== user.uid);
+      if (partnerId) {
+        try {
+          const pDoc = await db.users().doc(partnerId).get();
+          if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
+            setPartnerName(pDoc.data()?.displayName ?? 'partner');
+          }
+        } catch (e) {
+          console.error('Failed to fetch partner:', e);
+        }
+      }
+    };
+    fetchPartner();
+  }, [room, user]);
 
   const partnerCompleted =
     partnerStatus?.status === UserRoomStatus.COMPLETED;
@@ -117,7 +138,7 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   const isUser1 = results?.users[0] === user?.uid;
   const myScore = isUser1 ? results?.user1Score ?? 0 : results?.user2Score ?? 0;
   const partnerScore = isUser1 ? results?.user2Score ?? 0 : results?.user1Score ?? 0;
-  const total = results?.totalQuestions ?? 1;
+  const total = results?.totalQuestions || 1;
 
   const myPerc = Math.round((myScore / total) * 100);
 
@@ -128,9 +149,19 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
           {category?.icon} {category?.name}
         </Text>
 
-        <Text style={styles.resultTitle}>
-          {myScore}/{total} <Text style={styles.resultSync}>vs</Text> {partnerScore}/{total}
-        </Text>
+        <View style={styles.scoreContainer}>
+          <View style={styles.scoreBox}>
+            <Text style={styles.playerName}>{user?.displayName?.split(' ')[0] || 'You'}</Text>
+            <Text style={styles.resultTitle}>{myScore}/{total}</Text>
+          </View>
+          
+          <Text style={styles.resultSync}>vs</Text>
+          
+          <View style={styles.scoreBox}>
+            <Text style={styles.playerName}>{partnerName.split(' ')[0]}</Text>
+            <Text style={styles.resultTitle}>{partnerScore}/{total}</Text>
+          </View>
+        </View>
 
         <CircularProgress
           percentage={myPerc}
@@ -258,14 +289,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: Spacing.base,
   },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xl,
+    gap: Spacing.xl,
+  },
+  scoreBox: {
+    alignItems: 'center',
+  },
+  playerName: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
   resultTitle: {
     fontSize: Typography.fontSize['4xl'],
     color: Colors.textPrimary,
-    marginBottom: Spacing.xl,
     fontFamily: Typography.fontFamily.displayExtrabold,
   },
   resultSync: {
+    fontSize: Typography.fontSize.xl,
     color: Colors.primary,
+    fontFamily: Typography.fontFamily.bold,
+    marginTop: 16, // balance with the names above scores
   },
   compatLabel: {
     fontSize: Typography.fontSize.lg,

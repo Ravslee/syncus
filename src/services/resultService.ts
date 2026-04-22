@@ -2,11 +2,11 @@
 // SyncUs - Result Service
 // ============================================================
 
-import {db} from './firebase';
-import {Result, QuestionBreakdown, RoomStatus} from '../types';
-import {fetchUserAnswers} from './quizService';
-import {updateRoomStatus} from './roomService';
-import {SAMPLE_QUESTIONS} from '../constants';
+import { db } from './firebase';
+import { Result, QuestionBreakdown, RoomStatus } from '../types';
+import { fetchUserAnswers } from './quizService';
+import { updateRoomStatus } from './roomService';
+import { SAMPLE_QUESTIONS } from '../constants';
 
 /**
  * Calculate compatibility results for a room.
@@ -18,33 +18,38 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
   if (!roomDoc.exists) {
     throw new Error('Room not found');
   }
+  console.log('Room found:', roomDoc.data());
 
   const roomData = roomDoc.data();
   const users = roomData?.users as string[];
   if (users.length !== 2) {
     throw new Error('Room does not have 2 users');
   }
+  console.log('Room users:', users);
 
   const [user1Id, user2Id] = users;
-  const roundId = roomData?.currentRoundId || `${Date.now()}`;
+  const roundId = roomData?.currentRoundId || 'legacy_round';
+  const categoryId = roomData?.categoryId || '';
 
   // Fetch answers for both users with retry for Firestore eventual consistency
   let [user1Answers, user2Answers] = await Promise.all([
-    fetchUserAnswers(roomId, user1Id, roundId),
-    fetchUserAnswers(roomId, user2Id, roundId),
+    fetchUserAnswers(roomId, user1Id, categoryId),
+    fetchUserAnswers(roomId, user2Id, categoryId),
   ]);
 
   let retries = 0;
   while ((user1Answers.length === 0 || user2Answers.length === 0) && retries < 5) {
     await new Promise<void>(resolve => setTimeout(resolve, 1000));
     const [u1, u2] = await Promise.all([
-      fetchUserAnswers(roomId, user1Id, roundId),
-      fetchUserAnswers(roomId, user2Id, roundId),
+      fetchUserAnswers(roomId, user1Id, categoryId),
+      fetchUserAnswers(roomId, user2Id, categoryId),
     ]);
     user1Answers = u1;
     user2Answers = u2;
     retries++;
   }
+  console.log('User 1 Answers:', user1Answers);
+  console.log('User 2 Answers:', user2Answers);
 
   // Build answer maps keyed by questionId
   const user1Map = new Map(
@@ -53,6 +58,7 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
   const user2Map = new Map(
     user2Answers.map(a => [a.questionId, a]),
   );
+
 
   // Get all unique question IDs
   const allQuestionIds = new Set([
@@ -69,6 +75,8 @@ export const calculateResults = async (roomId: string): Promise<Result> => {
   const breakdown: QuestionBreakdown[] = [];
   let user1Matches = 0;
   let user2Matches = 0;
+
+  ``
 
   allQuestionIds.forEach(qId => {
     const u1A = user1Map.get(qId)?.selectedOption ?? -1;

@@ -89,7 +89,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const { clearRoomAnswers } = await import('../services/quizService');
       if (user && room) {
-        await clearRoomAnswers(room.id, user.uid);
+        await clearRoomAnswers(room.id, user.uid, selectedCategory.id);
       }
       await updateRoomCategory(room.id, selectedCategory.id);
       navigation.navigate('Quiz', { roomId: room.id, categoryId: selectedCategory.id });

@@ -25,6 +25,8 @@ export const Colors = {
   backgroundLight: '#FFE4EB',
   surface: '#FDD8E3',
   surfaceLight: '#F9C8D6',
+  surfaceDark: '#C25070',
+
 
   // Card / glassmorphism (light mode)
   glass: 'rgba(255, 255, 255, 0.6)',

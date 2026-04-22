@@ -67,6 +67,7 @@ export interface Question {
 export interface Answer {
   roomId: string;
   roundId: string;
+  categoryId: string;
   userId: string;
   questionId: string;
   selectedOption: number;

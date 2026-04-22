@@ -3,8 +3,8 @@
 // ============================================================
 
 import React from 'react';
-import {TouchableOpacity, Text, StyleSheet, View} from 'react-native';
-import {Colors, BorderRadius, Typography} from '../constants/theme';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Colors, BorderRadius, Typography } from '../constants/theme';
 
 interface QuestionCardProps {
   option: string;
@@ -35,7 +35,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         isCorrect && styles.correct,
         isWrong && styles.wrong
       ]}>
-      <View style={[
+      {/* <View style={[
         styles.label,
         selected && styles.labelSelected,
         isCorrect && styles.labelCorrect,
@@ -47,7 +47,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         ]}>
           {labels[index]}
         </Text>
-      </View>
+      </View> */}
       <Text style={[
         styles.optionText,
         selected && styles.optionTextSelected,
@@ -62,12 +62,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </View>
       )}
       {isCorrect && (
-        <View style={[styles.check, {backgroundColor: Colors.success}]}>
+        <View style={[styles.check, { backgroundColor: Colors.success }]}>
           <Text style={styles.checkText}>✓</Text>
         </View>
       )}
       {isWrong && (
-        <View style={[styles.check, {backgroundColor: Colors.error}]}>
+        <View style={[styles.check, { backgroundColor: Colors.error }]}>
           <Text style={styles.checkText}>✗</Text>
         </View>
       )}
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    // backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 4,
     borderColor: Colors.glassBorder,
     padding: 16,
     marginBottom: 12,
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textPrimary,
     fontWeight: '500',
+    textAlign: 'center',
   },
   optionTextSelected: {
     color: Colors.primaryDark,
