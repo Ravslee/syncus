@@ -64,18 +64,18 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
     <ScreenWrapper scrollable>
       <View style={styles.container}>
         {/* Header Score */}
-        <View style={styles.scoreSection}>
+        {/* <View style={styles.scoreSection}>
           <CircularProgress
             percentage={scorePerc}
             size={160}
             strokeWidth={12}
             color={Colors.primary}
-            label="Accuracy"
+            label="Your Sync"
           />
           <Text style={styles.compatLabel}>
             You got {myScore} out of {total}!
           </Text>
-        </View>
+        </View> */}
 
         {/* Insight */}
         <GlassCard style={styles.insightCard} variant="elevated">
@@ -89,7 +89,7 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
           const question = SAMPLE_QUESTIONS.find(
             q => q.id === item.questionId,
           );
-          
+
           const myGuess = isUser1 ? item.user1Guess : item.user2Guess;
           const partnerAnswer = isUser1 ? item.user2Answer : item.user1Answer;
           const match = isUser1 ? item.user1Match : item.user2Match;
@@ -115,7 +115,7 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
                       styles.matchText,
                       { color: match ? Colors.success : Colors.error },
                     ]}>
-                    {match ? 'Hit! ✓' : 'Miss ✗'}
+                    {match ? 'Synced!' : 'Missed!'}
                   </Text>
                 </View>
               </View>
@@ -123,18 +123,10 @@ export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
                 {question?.text ?? item.questionText}
               </Text>
               <View style={styles.answersRow}>
-                <View style={styles.answerCol}>
-                  <Text style={styles.answerLabel}>You Guessed</Text>
-                  <Text style={styles.answerValue}>
-                    {question?.options[myGuess] ?? `Option ${myGuess + 1}`}
-                  </Text>
-                </View>
-                <View style={styles.answerCol}>
-                  <Text style={styles.answerLabel}>{partnerName} Chose</Text>
-                  <Text style={styles.answerValue}>
-                    {question?.options[partnerAnswer] ?? `Option ${partnerAnswer + 1}`}
-                  </Text>
-                </View>
+                <Text style={styles.answerLabel}>{partnerName.split(' ')[0]}: </Text>
+                <Text style={styles.answerValue}>
+                  {question?.options[partnerAnswer] ?? `Option ${partnerAnswer + 1}`}
+                </Text>
               </View>
             </GlassCard>
           );
@@ -198,8 +190,8 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
   sectionTitle: {
-    fontSize: Typography.fontSize.md,
-    color: Colors.textPrimary,
+    fontSize: Typography.fontSize.lg,
+    color: Colors.textAccent,
     marginBottom: Spacing.md,
     fontFamily: Typography.fontFamily.bold,
   },
@@ -208,7 +200,7 @@ const styles = StyleSheet.create({
   },
   insightText: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     lineHeight: 22,
     fontFamily: Typography.fontFamily.regular,
   },
@@ -224,7 +216,7 @@ const styles = StyleSheet.create({
   },
   questionNumber: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.bold,
   },
   matchBadge: {
@@ -238,27 +230,25 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     fontFamily: Typography.fontFamily.semibold,
     marginBottom: Spacing.md,
   },
   answersRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  answerCol: {
-    flex: 1,
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   answerLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textMuted,
-    marginBottom: 2,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textAccent,
+    opacity: 0.7,
     fontFamily: Typography.fontFamily.semibold,
   },
   answerValue: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.semibold,
+    color: Colors.textAccent,
+    fontFamily: Typography.fontFamily.bold,
   },
   categoryBreakdown: {
     marginTop: Spacing.xl,
