@@ -3,12 +3,12 @@
 // ============================================================
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, BackHandler } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, BackHandler, Animated } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { GradientButton } from '../components/GradientButton';
-import { CategoryCard } from '../components/CategoryCard';
+import { SpinWheelModal } from '../components/SpinWheelModal';
 import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
 import { RootStackParamList, Category, UserRoomStatus } from '../types';
 import { CATEGORIES } from '../constants';
@@ -25,10 +25,23 @@ type Props = {
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { user, room, resetQuiz, leaveRoom } = useAppStore();
   const { partnerStatus } = usePartnerStatus(room?.id);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
   const [partnerName, setPartnerName] = useState<string>('your partner');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+
+  const pulseAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, [pulseAnim]);
 
   // Fetch partner name
   React.useEffect(() => {
@@ -77,13 +90,29 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }, [user, room, resetQuiz])
   );
 
-  const handleSelect = (category: Category) => {
-    setSelectedCategory(category);
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.substring(0, 2).toUpperCase();
   };
 
-  const handleStart = async () => {
-    if (!selectedCategory || !room) {
-      if (!room) Alert.alert('Error', 'You must be in a room to start.');
+  const handlePlayClick = () => {
+    const isQuizLive =
+      partnerStatus?.status === UserRoomStatus.ANSWERING ||
+      partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
+      partnerStatus?.status === UserRoomStatus.GUESSING;
+
+    if (isQuizLive && room?.categoryId) {
+      setShowPartnerModal(true);
+    } else {
+      setShowSpinWheel(true);
+    }
+  };
+
+  const handleCategorySelected = async (category: Category) => {
+    setShowSpinWheel(false);
+    setShowPartnerModal(false);
+    if (!room) {
+      Alert.alert('Error', 'You must be in a room to start.');
       return;
     }
 
@@ -91,10 +120,10 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const { clearRoomAnswers } = await import('../services/quizService');
       if (user && room) {
-        await clearRoomAnswers(room.id, user.uid, selectedCategory.id);
+        await clearRoomAnswers(room.id, user.uid, category.id);
       }
-      await updateRoomCategory(room.id, selectedCategory.id);
-      navigation.navigate('Quiz', { roomId: room.id, categoryId: selectedCategory.id });
+      await updateRoomCategory(room.id, category.id);
+      navigation.navigate('Quiz', { roomId: room.id, categoryId: category.id });
     } catch (error) {
       console.error('Failed to set category:', error);
     } finally {
@@ -117,14 +146,13 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     Alert.alert('Profile', 'Profile feature coming soon!'); // Placeholder
   };
 
+  const partnerCategory = CATEGORIES.find(c => c.id === room?.categoryId);
+
   return (
     <ScreenWrapper scrollable>
       {/* Header Bar */}
       <View style={styles.topBar}>
         <View>
-          {/* <Text style={styles.greeting}>
-            Hey, {user?.displayName ?? 'there'}
-          </Text> */}
           <Text style={styles.appBadge}>Syncus</Text>
         </View>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
@@ -147,43 +175,104 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </Pressable>
       </Modal>
 
-      <View style={styles.container}>
-        <Text style={styles.title}>A little quiz, a lot of discovery</Text>
-
-        <Text style={styles.subtitle}>
-          You are paired with <Text style={styles.partnerName}>{partnerName}</Text>. Pick a vibe below to test your connection!
-        </Text>
-
-        {/* Category Grid */}
-        <View style={styles.grid}>
-          {(() => {
-            const isQuizLive =
-              partnerStatus?.status === UserRoomStatus.ANSWERING ||
-              partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
-              partnerStatus?.status === UserRoomStatus.GUESSING;
-
-            const activeCategoryId = isQuizLive ? room?.categoryId : null;
-
-            return CATEGORIES.map(category => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                onPress={handleSelect}
-                selected={selectedCategory?.id === category.id}
-                isActiveQuiz={activeCategoryId === category.id}
-              />
-            ));
-          })()}
+      {/* Partner Started Modal */}
+      <Modal visible={showPartnerModal} transparent animationType="fade" onRequestClose={() => setShowPartnerModal(false)}>
+        <View style={styles.partnerModalOverlay}>
+          <View style={styles.partnerModalContent}>
+            <Text style={styles.partnerModalTitle}>Your Partner Spun!</Text>
+            <Text style={styles.partnerModalSubtitle}>
+              {partnerName} already chose a vibe. Get ready to play:
+            </Text>
+            {partnerCategory && (
+              <View style={[styles.categoryBadge, { backgroundColor: partnerCategory.color + '20' }]}>
+                <Text style={styles.categoryBadgeIcon}>{partnerCategory.icon}</Text>
+                <Text style={[styles.categoryBadgeText, { color: partnerCategory.color }]}>
+                  {partnerCategory.name}
+                </Text>
+              </View>
+            )}
+            <GradientButton
+              title="Join Quiz"
+              onPress={() => partnerCategory && handleCategorySelected(partnerCategory)}
+              size="lg"
+              style={{ width: '100%', marginTop: Spacing.xl }}
+            />
+            <TouchableOpacity onPress={() => setShowPartnerModal(false)} style={styles.closeModalButton}>
+              <Text style={styles.closeModalText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </Modal>
 
-        <GradientButton
-          title="Play"
-          onPress={handleStart}
-          disabled={!selectedCategory}
-          loading={loading}
-          size="lg"
-          style={styles.continueButton}
-        />
+      {/* Spin Wheel Modal */}
+      <SpinWheelModal
+        visible={showSpinWheel}
+        onClose={() => setShowSpinWheel(false)}
+        onCategorySelected={handleCategorySelected}
+      />
+
+      <View style={styles.container}>
+        <View style={styles.heroSection}>
+          <Text style={styles.title}>Ready to play?</Text>
+          <Text style={styles.subtitle}>
+            You are paired with <Text style={styles.partnerName}>{partnerName}</Text>. Let fate choose your vibe!
+          </Text>
+
+          {/* Avatars */}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarWrapper}>
+              <View style={[styles.avatarCircle, { backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.primary }]}>
+                <Text style={[styles.avatarText, { color: Colors.primary }]}>{getInitials(user?.displayName)}</Text>
+              </View>
+              <Text style={styles.avatarLabel}>You</Text>
+            </View>
+
+            <View style={styles.connectionLine}>
+              <Icon name="cards-heart" size={28} color={Colors.textAccent} />
+            </View>
+
+            <View style={styles.avatarWrapper}>
+              <View style={[styles.avatarCircle, { backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.primaryLight }]}>
+                <Text style={[styles.avatarText, { color: Colors.primaryLight }]}>{getInitials(partnerName)}</Text>
+              </View>
+              <Text style={styles.avatarLabel}>{partnerName}</Text>
+            </View>
+          </View>
+
+          {/* Play Button */}
+          <View style={styles.playContainer}>
+            <Animated.View
+              style={[
+                styles.rippleEffect,
+                {
+                  transform: [
+                    {
+                      scale: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.8],
+                      }),
+                    },
+                  ],
+                  opacity: pulseAnim.interpolate({
+                    inputRange: [0, 0.8, 1],
+                    outputRange: [0.6, 0, 0],
+                  }),
+                },
+              ]}
+            />
+            <TouchableOpacity
+              style={styles.playButton}
+              onPress={handlePlayClick}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.playButtonInner, loading && { opacity: 0.7 }]}>
+                <Icon name="play" size={56} color={Colors.primaryDark} style={{ marginLeft: 6 }} />
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.playHintText}>Tap to Spin</Text>
+          </View>
+        </View>
       </View>
     </ScreenWrapper>
   );
@@ -196,10 +285,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Spacing.base,
     marginBottom: Spacing.md,
-  },
-  greeting: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
   },
   appBadge: {
     fontSize: Typography.fontSize['2xl'],
@@ -242,42 +327,163 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   container: {
+    flex: 1,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing['3xl'],
-    // fontFamily: Typography.fontFamily.regular,
   },
-  badge: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.primary,
-    letterSpacing: 2,
-    marginBottom: Spacing.sm,
-    fontFamily: Typography.fontFamily.extrabold,
+  heroSection: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.xl,
   },
   title: {
-    fontSize: Typography.fontSize['2xl'],
-    // fontWeight: '800',
+    fontSize: Typography.fontSize['3xl'],
     color: Colors.textAccent,
     marginBottom: Spacing.sm,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.extrabold,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.lg,
     color: Colors.textSecondary,
-    marginBottom: Spacing['2xl'],
-    lineHeight: 22,
+    marginBottom: Spacing['3xl'],
+    lineHeight: 26,
     fontFamily: Typography.fontFamily.regular,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.lg,
   },
   partnerName: {
     color: Colors.primaryLight,
     fontFamily: Typography.fontFamily.bold,
   },
-  grid: {
+  avatarContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing['3xl'] * 1.5,
   },
-  continueButton: {
+  avatarWrapper: {
+    alignItems: 'center',
+  },
+  avatarCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.glow,
+  },
+  avatarText: {
+    fontSize: Typography.fontSize['2xl'],
+    fontFamily: Typography.fontFamily.bold,
+  },
+  avatarLabel: {
+    marginTop: Spacing.sm,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  connectionLine: {
+    marginHorizontal: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rippleEffect: {
+    position: 'absolute',
+    top: 0,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.primaryLight,
+  },
+  playButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.glow,
+    elevation: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+  },
+  playButtonInner: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
+  playHintText: {
+    marginTop: Spacing.lg,
+    fontSize: Typography.fontSize.base,
+    color: Colors.textAccent,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  partnerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  partnerModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: Spacing.xl,
+    padding: Spacing.xl,
+    alignItems: 'center',
     width: '100%',
+    ...Shadows.glow,
+  },
+  partnerModalTitle: {
+    fontSize: Typography.fontSize['2xl'],
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  partnerModalSubtitle: {
+    fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xl,
+    textAlign: 'center',
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Spacing.full,
+  },
+  categoryBadgeIcon: {
+    fontSize: 24,
+    marginRight: Spacing.sm,
+  },
+  categoryBadgeText: {
+    fontSize: Typography.fontSize.lg,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  closeModalButton: {
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+  },
+  closeModalText: {
+    color: Colors.textSecondary,
+    fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.medium,
   },
 });

@@ -8,6 +8,8 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -41,6 +43,11 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const [partnerAnswers, setPartnerAnswers] = useState<Record<string, number>>({});
   const [fetchingPartner, setFetchingPartner] = useState(false);
   const [showNext, setShowNext] = useState(false);
+
+  // Animation values
+  const { width } = Dimensions.get('window');
+  const questionAnim = React.useRef(new Animated.Value(width)).current;
+  const optionsAnim = React.useRef(new Animated.Value(-width)).current;
 
   const {
     quizPhase,
@@ -122,6 +129,24 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [currentQuestionIndex, totalQuestions, loading, roomId, navigation, quizPhase]);
 
+  useEffect(() => {
+    questionAnim.setValue(width);
+    optionsAnim.setValue(-width);
+
+    Animated.parallel([
+      Animated.timing(questionAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(optionsAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [currentQuestionIndex, width, questionAnim, optionsAnim]);
+
   const onOptionSelect = async (optionIndex: number) => {
     if (showNext) return; // Locked until next question
     setSelectedOption(optionIndex);
@@ -132,7 +157,10 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
         setSelectedOption(null);
       } else {
         await handleGuess(optionIndex);
-        setShowNext(true); // show manual next button
+        setShowNext(true); // lock state to show correct/wrong
+        setTimeout(() => {
+          onNextClicked();
+        }, 500);
       }
     } catch (error) {
       console.error('Failed to submit answer/guess:', error);
@@ -263,12 +291,12 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
 
             {/* Question */}
-            <View style={styles.questionSection}>
+            <Animated.View style={[styles.questionSection, { transform: [{ translateX: questionAnim }] }]}>
               <Text style={styles.progressText}>
                 {currentQuestionIndex + 1} / {totalQuestions}
               </Text>
               <Text style={styles.questionText}>{currentQuestion.text}</Text>
-            </View>
+            </Animated.View>
           </View>
         </View>
 
@@ -287,7 +315,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
         }}>
           {/* Options */}
-          <View style={styles.options}>
+          <Animated.View style={[styles.options, { transform: [{ translateX: optionsAnim }] }]}>
             {currentQuestion.options.map((option, index) => {
               const isCurrentlySelected = selectedOption === index;
               // Phase 2 validation calculations
@@ -317,16 +345,9 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
                 />
               );
             })}
-          </View>
+          </Animated.View>
 
-          {quizPhase === 2 && (
-            <GradientButton
-              style={{ marginTop: Spacing.base, marginHorizontal: Spacing.base }}
-              title={isLastQuestion ? 'Finish Game' : 'Next Question'}
-              onPress={onNextClicked}
-              disabled={!showNext}
-            />
-          )}
+
 
         </View>
 

@@ -87,16 +87,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   selected: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryLight,
   },
   correct: {
-    backgroundColor: Colors.success + '20',
-    borderColor: Colors.success,
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryLight,
   },
   wrong: {
-    backgroundColor: Colors.error + '20',
-    borderColor: Colors.error,
+    backgroundColor: Colors.warning,
+    borderColor: Colors.warning,
   },
   label: {
     width: 36,
@@ -132,15 +132,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   optionTextSelected: {
-    color: Colors.textAccent,
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   optionTextCorrect: {
-    color: Colors.success,
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   optionTextWrong: {
-    color: Colors.error,
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   check: {

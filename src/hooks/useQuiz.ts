@@ -46,39 +46,46 @@ export const useQuiz = (roomId: string, categoryId: string) => {
       // Save answer locally
       setAnswer(currentQuestion.id, selectedOption);
 
-      // Submit answer to Firestore
+      // Transition to next question immediately (optimistic UI)
+      nextQuestion();
+
+      // Submit to Firestore in the background
       const roundId = room?.currentRoundId || 'legacy_round';
-      await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption, roundId, categoryId);
+      
+      const syncBackground = async () => {
+        try {
+          await submitAnswer(roomId, user.uid, currentQuestion.id, selectedOption, roundId, categoryId);
 
-      if (isLastQuestion) {
-        // Batch submit all answers for reliability
-        const roundId = room?.currentRoundId || 'legacy_round';
-        const allAnswers: Answer[] = Object.entries({
-          ...answers,
-          [currentQuestion.id]: selectedOption,
-        }).map(([questionId, option]) => ({
-          roomId,
-          roundId,
-          userId: user.uid,
-          questionId,
-          categoryId,
-          selectedOption: option,
-          createdAt: Date.now(),
-        }));
+          if (isLastQuestion) {
+            // Batch submit all answers for reliability
+            const allAnswers: Answer[] = Object.entries({
+              ...answers,
+              [currentQuestion.id]: selectedOption,
+            }).map(([questionId, option]) => ({
+              roomId,
+              roundId,
+              userId: user.uid,
+              questionId,
+              categoryId,
+              selectedOption: option,
+              createdAt: Date.now(),
+            }));
 
-        await batchSubmitAnswers(allAnswers);
+            await batchSubmitAnswers(allAnswers);
 
-        // Mark user as waiting for partner to finish Phase 1
-        await updateProgress(roomId, user.uid, questions.length, UserRoomStatus.WAITING_FOR_PARTNER);
+            // Mark user as waiting for partner to finish Phase 1
+            await updateProgress(roomId, user.uid, questions.length, UserRoomStatus.WAITING_FOR_PARTNER);
+          } else {
+            // Update progress
+            const nextIndex = currentQuestionIndex + 1;
+            await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.ANSWERING);
+          }
+        } catch (err) {
+          console.error('Background sync failed for answer', err);
+        }
+      };
 
-        // Transition to end of Phase 1
-        nextQuestion();
-      } else {
-        // Update progress
-        const nextIndex = currentQuestionIndex + 1;
-        await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.ANSWERING);
-        nextQuestion();
-      }
+      syncBackground();
     },
     [
       user,
@@ -96,16 +103,28 @@ export const useQuiz = (roomId: string, categoryId: string) => {
   const handleGuess = useCallback(
     async (guessedOption: number) => {
       if (!user || !currentQuestion) return;
+      
+      // Save locally immediately
       setGuess(currentQuestion.id, guessedOption);
+      
       const roundId = room?.currentRoundId || 'legacy_round';
-      await submitGuess(roomId, user.uid, currentQuestion.id, guessedOption, roundId, categoryId);
+      
+      const syncBackground = async () => {
+        try {
+          await submitGuess(roomId, user.uid, currentQuestion.id, guessedOption, roundId, categoryId);
 
-      if (isLastQuestion) {
-        await markCompleted(roomId, user.uid);
-      } else {
-        const nextIndex = currentQuestionIndex + 1;
-        await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.GUESSING);
-      }
+          if (isLastQuestion) {
+            await markCompleted(roomId, user.uid);
+          } else {
+            const nextIndex = currentQuestionIndex + 1;
+            await updateProgress(roomId, user.uid, nextIndex, UserRoomStatus.GUESSING);
+          }
+        } catch (err) {
+          console.error('Background sync failed for guess', err);
+        }
+      };
+
+      syncBackground();
     },
     [
       user,
