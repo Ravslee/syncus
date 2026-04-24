@@ -43,6 +43,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const [partnerAnswers, setPartnerAnswers] = useState<Record<string, number>>({});
   const [fetchingPartner, setFetchingPartner] = useState(false);
   const [showNext, setShowNext] = useState(false);
+  const [readyToGuess, setReadyToGuess] = useState(false);
 
   // Animation values
   const { width } = Dimensions.get('window');
@@ -84,7 +85,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Phase transition logic
   useEffect(() => {
-    if (isWaitState && !fetchingPartner && totalQuestions > 0) {
+    if (isWaitState && !fetchingPartner && totalQuestions > 0 && !readyToGuess) {
       const partnerReady =
         partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
         partnerStatus?.status === UserRoomStatus.GUESSING ||
@@ -102,9 +103,8 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
               answersMap.forEach(a => (map[a.questionId] = a.selectedOption));
               setPartnerAnswers(map);
 
-              // Reset index and enter Phase 2
-              useAppStore.setState({ quizPhase: 2, currentQuestionIndex: 0 });
-              setSelectedOption(null);
+              // Set ready to guess instead of transitioning immediately
+              setReadyToGuess(true);
             }
           } catch (e) {
             console.error('Failed to fetch partner answers', e);
@@ -115,7 +115,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
         fetchRemoteAnswers();
       }
     }
-  }, [isWaitState, partnerStatus, fetchingPartner, totalQuestions, room, user, roomId]);
+  }, [isWaitState, partnerStatus, fetchingPartner, totalQuestions, room, user, roomId, readyToGuess]);
 
   // Navigate to results when Phase 2 completes
   useEffect(() => {
@@ -188,6 +188,30 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Intermediate waiting screen between phases
   if (isWaitState) {
+    if (readyToGuess) {
+      return (
+        <ScreenWrapper>
+          <View style={styles.loadingContainer}>
+            <Text style={{ fontSize: 56, marginBottom: Spacing.xl }}>🤩</Text>
+            <Text style={styles.waitingTitle}>Ready to guess?</Text>
+            <Text style={styles.loadingText}>
+              Both of you have finished answering! It's time to see how well you know each other.
+            </Text>
+            <View style={{ marginTop: Spacing['3xl'], width: '100%' }}>
+              <GradientButton
+                title="Start Guessing"
+                onPress={() => {
+                  useAppStore.setState({ quizPhase: 2, currentQuestionIndex: 0 });
+                  setSelectedOption(null);
+                  setReadyToGuess(false);
+                }}
+              />
+            </View>
+          </View>
+        </ScreenWrapper>
+      );
+    }
+
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>

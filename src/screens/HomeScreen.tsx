@@ -15,6 +15,7 @@ import { CATEGORIES } from '../constants';
 import { updateRoomCategory } from '../services/roomService';
 import { useAppStore } from '../store/useAppStore';
 import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { useRoom } from '../hooks/useRoom';
 import { db } from '../services/firebase';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -24,6 +25,7 @@ type Props = {
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { user, room, resetQuiz, leaveRoom } = useAppStore();
+  useRoom(room?.id);
   const { partnerStatus } = usePartnerStatus(room?.id);
   const [loading, setLoading] = useState(false);
   const [partnerName, setPartnerName] = useState<string>('your partner');
@@ -111,21 +113,37 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const handleCategorySelected = async (category: Category) => {
     setShowSpinWheel(false);
     setShowPartnerModal(false);
-    if (!room) {
+    if (!room || !user) {
       Alert.alert('Error', 'You must be in a room to start.');
       return;
     }
 
     setLoading(true);
     try {
-      const { clearRoomAnswers } = await import('../services/quizService');
-      if (user && room) {
-        await clearRoomAnswers(room.id, user.uid, category.id);
-      }
+      const { clearRoomAnswers, updateProgress } = await import('../services/quizService');
+      await clearRoomAnswers(room.id, user.uid, category.id);
+      await updateProgress(room.id, user.uid, 0, UserRoomStatus.ANSWERING);
       await updateRoomCategory(room.id, category.id);
       navigation.navigate('Quiz', { roomId: room.id, categoryId: category.id });
     } catch (error) {
       console.error('Failed to set category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinQuiz = async () => {
+    setShowPartnerModal(false);
+    if (!room || !user || !room.categoryId) return;
+    
+    setLoading(true);
+    try {
+      const { clearRoomAnswers, updateProgress } = await import('../services/quizService');
+      await clearRoomAnswers(room.id, user.uid, room.categoryId);
+      await updateProgress(room.id, user.uid, 0, UserRoomStatus.ANSWERING);
+      navigation.navigate('Quiz', { roomId: room.id, categoryId: room.categoryId });
+    } catch (e) {
+      console.error('Failed to join quiz:', e);
     } finally {
       setLoading(false);
     }
@@ -193,7 +211,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             )}
             <GradientButton
               title="Join Quiz"
-              onPress={() => partnerCategory && handleCategorySelected(partnerCategory)}
+              onPress={handleJoinQuiz}
               size="lg"
               style={{ width: '100%', marginTop: Spacing.xl }}
             />
