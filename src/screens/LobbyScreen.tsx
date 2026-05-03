@@ -10,7 +10,7 @@ import { ScreenWrapper } from '../components/ScreenWrapper';
 import { GradientButton } from '../components/GradientButton';
 import { GlassCard } from '../components/GlassCard';
 import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
-import { RootStackParamList, Room } from '../types';
+import { RootStackParamList, Room, RoomStatus } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { getActiveRoomForUser } from '../services/roomService';
 import { LobbyIllustration } from '../components/LobbyIllustration';
@@ -34,7 +34,12 @@ export const LobbyScreen: React.FC<Props> = ({ navigation }) => {
           const room = await getActiveRoomForUser(user.uid);
           if (active && room) {
             setRoom(room);
-            navigation.replace('WaitingRoom', { roomId: room.id, roomCode: room.code });
+            // If both users are already in the room, skip WaitingRoom and go straight to Home
+            if (room.status === RoomStatus.ACTIVE && room.users.length === 2) {
+              navigation.replace('Home');
+            } else {
+              navigation.replace('WaitingRoom', { roomId: room.id, roomCode: room.code });
+            }
           }
         } catch (e) {
           console.error(e);

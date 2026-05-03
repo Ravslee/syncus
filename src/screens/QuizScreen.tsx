@@ -2,7 +2,7 @@
 // SyncUs - Quiz Screen
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,20 +10,25 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  BackHandler,
+  Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { QuestionCard } from '../components/QuestionCard';
 import { PartnerStatusOverlay } from '../components/PartnerStatusOverlay';
 import { GlassCard } from '../components/GlassCard';
 import { GradientButton } from '../components/GradientButton';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
-import { RootStackParamList, UserRoomStatus } from '../types';
+import { RootStackParamList, UserRoomStatus, RoomStatus } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { useQuiz } from '../hooks/useQuiz';
-import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { useRoomPresence } from '../hooks/useRoomPresence';
+import { useRoom } from '../hooks/useRoom';
 import { fetchQuestions } from '../services/quizService';
+import { updateHeartbeat } from '../services/roomService';
 import { CATEGORIES } from '../constants';
 
 type Props = {
@@ -33,7 +38,8 @@ type Props = {
 
 export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const { roomId, categoryId } = route.params;
-  const { user, room, partner, setQuestions, questions } = useAppStore();
+  const { user, room, partner, setQuestions, questions, resetQuiz } = useAppStore();
+  useRoom(roomId); // Keep room data fresh via real-time listener
   const partnerName = partner?.displayName ? partner.displayName.split(' ')[0] : 'they';
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -44,6 +50,8 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   const [fetchingPartner, setFetchingPartner] = useState(false);
   const [showNext, setShowNext] = useState(false);
   const [readyToGuess, setReadyToGuess] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
+  const [waitTimeout, setWaitTimeout] = useState(false);
 
   // Animation values
   const { width } = Dimensions.get('window');
@@ -60,11 +68,88 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
     handleAnswer,
     handleGuess,
     handleNext,
+    syncAllAnswers,
   } = useQuiz(roomId, categoryId);
 
-  const { partnerStatus } = usePartnerStatus(roomId);
+  const { partnerStatus } = useRoomPresence(roomId);
 
   const category = CATEGORIES.find(c => c.id === categoryId);
+
+  // Back button confirmation
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert(
+          'Quit Quiz?',
+          'Are you sure you want to leave? Your progress in this round will be lost.',
+          [
+            { text: 'Stay', style: 'cancel' },
+            {
+              text: 'Quit',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  // Reset room state back to JOINED so partner sees us as idle
+                  if (user && room) {
+                    const { updateProgress } = await import('../services/quizService');
+                    await updateProgress(room.id, user.uid, 0, UserRoomStatus.JOINED);
+                  }
+                } catch (e) {
+                  console.error('Failed to reset room state:', e);
+                }
+                resetQuiz();
+                navigation.navigate('Home');
+              },
+            },
+          ],
+        );
+        return true; // prevent default back
+      };
+
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [user, room, resetQuiz, navigation])
+  );
+
+  // #3: Detect partner leaving room mid-quiz
+  useEffect(() => {
+    if (!room || !user) return;
+
+    const partnerLeft =
+      room.status === RoomStatus.COMPLETED ||
+      (room.users.length < 2 && room.users.length > 0 && !room.users.includes(user.uid) === false);
+
+    if (partnerLeft) {
+      Alert.alert(
+        'Partner Left',
+        'Your partner has left the room. The quiz has ended.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              resetQuiz();
+              navigation.navigate('Home');
+            },
+          },
+        ],
+        { cancelable: false },
+      );
+    }
+  }, [room?.status, room?.users.length]);
+
+  // #1: Heartbeat (update our lastActive every 30s)
+  useEffect(() => {
+    if (!user || !room) return;
+
+    // Initial heartbeat
+    updateHeartbeat(room.id, user.uid);
+
+    const interval = setInterval(() => {
+      updateHeartbeat(room.id, user.uid);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user?.uid, room?.id]);
 
   // Load questions
   useEffect(() => {
@@ -83,9 +168,35 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const isWaitState = quizPhase === 1 && currentQuestionIndex >= totalQuestions;
 
+  // #5 & #1: Timeout & Stale detection on waiting-for-partner screen
+  useEffect(() => {
+    if (!isWaitState || readyToGuess || fetchError) {
+      setWaitTimeout(false);
+      return;
+    }
+
+    // Check if partner is stale (not seen in > 60s)
+    const checkStale = () => {
+      if (partnerStatus?.lastActive) {
+        const diff = Date.now() - partnerStatus.lastActive;
+        if (diff > 60000) {
+          setWaitTimeout(true);
+        }
+      }
+    };
+
+    const staleInterval = setInterval(checkStale, 10000);
+    const timeoutTimer = setTimeout(() => setWaitTimeout(true), 2 * 60 * 1000);
+
+    return () => {
+      clearInterval(staleInterval);
+      clearTimeout(timeoutTimer);
+    };
+  }, [isWaitState, readyToGuess, fetchError, partnerStatus?.lastActive]);
+
   // Phase transition logic
   useEffect(() => {
-    if (isWaitState && !fetchingPartner && totalQuestions > 0 && !readyToGuess) {
+    if (isWaitState && !fetchingPartner && totalQuestions > 0 && !readyToGuess && !fetchError) {
       const partnerReady =
         partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
         partnerStatus?.status === UserRoomStatus.GUESSING ||
@@ -108,6 +219,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
             }
           } catch (e) {
             console.error('Failed to fetch partner answers', e);
+            setFetchError(true);
           } finally {
             setFetchingPartner(false);
           }
@@ -115,7 +227,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
         fetchRemoteAnswers();
       }
     }
-  }, [isWaitState, partnerStatus, fetchingPartner, totalQuestions, room, user, roomId, readyToGuess]);
+  }, [isWaitState, partnerStatus, fetchingPartner, totalQuestions, room, user, roomId, readyToGuess, fetchError]);
 
   // Navigate to results when Phase 2 completes
   useEffect(() => {
@@ -212,6 +324,26 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
       );
     }
 
+    if (fetchError) {
+      return (
+        <ScreenWrapper>
+          <View style={styles.loadingContainer}>
+            <Text style={{ fontSize: 56, marginBottom: Spacing.xl }}>⚠️</Text>
+            <Text style={styles.waitingTitle}>Sync Failed</Text>
+            <Text style={styles.loadingText}>
+              We had trouble syncing with {partnerName}. Please check your connection and try again.
+            </Text>
+            <View style={{ marginTop: Spacing['3xl'], width: '100%' }}>
+              <GradientButton
+                title="Retry Sync"
+                onPress={() => setFetchError(false)}
+              />
+            </View>
+          </View>
+        </ScreenWrapper>
+      );
+    }
+
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
@@ -226,6 +358,40 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
               they answered!
             </Text>
           </GlassCard>
+
+          <TouchableOpacity
+            onPress={syncAllAnswers}
+            style={{ marginTop: Spacing.lg, padding: Spacing.sm }}
+          >
+            <Text style={{ color: Colors.primaryLight, fontSize: Typography.fontSize.xs, textDecorationLine: 'underline' }}>
+              Not syncing? Tap to refresh your status
+            </Text>
+          </TouchableOpacity>
+
+          {waitTimeout && (
+            <View style={{ marginTop: Spacing.xl, width: '100%', alignItems: 'center' }}>
+              <Text style={[styles.loadingText, { color: Colors.textMuted, marginBottom: Spacing.md }]}>
+                Taking too long? Your partner may have disconnected.
+              </Text>
+              <GradientButton
+                title="Go Home"
+                variant="secondary"
+                onPress={async () => {
+                  try {
+                    if (user && room) {
+                      const { updateProgress } = await import('../services/quizService');
+                      await updateProgress(room.id, user.uid, 0, UserRoomStatus.JOINED);
+                    }
+                  } catch (e) {
+                    console.error('Failed to reset room state:', e);
+                  }
+                  resetQuiz();
+                  navigation.navigate('Home');
+                }}
+                style={{ width: '100%' }}
+              />
+            </View>
+          )}
         </View>
       </ScreenWrapper>
     );
@@ -466,7 +632,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: Typography.fontSize['xl'],
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     minWidth: 40,
     textAlign: 'left',
     fontFamily: Typography.fontFamily.bold,
@@ -484,7 +650,7 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: Typography.fontSize['3xl'],
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     // lineHeight: 32,
     fontFamily: Typography.fontFamily.displayExtrabold,
   },

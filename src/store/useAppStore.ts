@@ -55,6 +55,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   partnerStatus: null,
   setPartnerStatus: (status: RoomState | null) =>
     set({partnerStatus: status}),
+  myStatus: null,
+  setMyStatus: (status: RoomState | null) =>
+    set({myStatus: status}),
 
   // ---- Results ----
   results: null,
@@ -73,7 +76,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       answers: {},
       guesses: {},
       partner: null,
-      partnerStatus: null,
       results: null,
     }),
 
@@ -90,6 +92,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       answers: {},
       guesses: {},
       partnerStatus: null,
+      myStatus: null,
       results: null,
       history: [],
     }),

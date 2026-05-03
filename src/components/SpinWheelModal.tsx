@@ -38,10 +38,10 @@ export const SpinWheelModal: React.FC<Props> = ({ visible, onClose, onCategorySe
     const sliceAngle = 360 / CATEGORIES.length;
     // Select a random category
     const randomIndex = Math.floor(Math.random() * CATEGORIES.length);
-    
+
     // Calculate mid angle of the target slice (in degrees)
     const midAngle = randomIndex * sliceAngle + sliceAngle / 2;
-    
+
     // We want this midAngle to land at the top (-90 degrees)
     // Rotation = 360 * spins - 90 - midAngle
     const spins = 5; // number of full rotations
@@ -102,6 +102,7 @@ export const SpinWheelModal: React.FC<Props> = ({ visible, onClose, onCategorySe
             alignmentBaseline="middle"
           >
             {cat.icon}
+            {/* {cat.name} */}
           </SvgText>
         </G>
       );
@@ -137,7 +138,7 @@ export const SpinWheelModal: React.FC<Props> = ({ visible, onClose, onCategorySe
                 <View style={styles.centerDot} />
               </Svg>
             </Animated.View>
-            <View style={[styles.centerDot, { top: WHEEL_SIZE/2 - 15, left: WHEEL_SIZE/2 - 15 }]} />
+            <View style={[styles.centerDot, { top: WHEEL_SIZE / 2 - 15, left: WHEEL_SIZE / 2 - 15 }]} />
           </View>
 
           {!selected ? (
@@ -217,7 +218,13 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     backgroundColor: Colors.surface,
-    ...Shadows.glow,
+    shadowColor: '#abc82a', // Flame glow
+    // shadowOffset: { width: 0, height: 0 },
+    // shadowOpacity: 0.35,
+    // shadowRadius: 18,
+    // elevation: 8,
+
+    // ...Shadows.glow,
   },
   actionButton: {
     width: '100%',

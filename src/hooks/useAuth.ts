@@ -7,8 +7,8 @@ import {useAppStore} from '../store/useAppStore';
 import {
   onAuthStateChanged,
   getUserProfile,
-  checkOnboardingStatus,
   updateLastLogin,
+  getCurrentUser,
 } from '../services/authService';
 
 export const useAuth = () => {
@@ -21,22 +21,35 @@ export const useAuth = () => {
         try {
           // Fetch user profile from Firestore
           const profile = await getUserProfile(userId);
-          let onboarded = false;
           if (profile) {
             setUser(profile);
+            setOnboarded(true);
             await updateLastLogin(userId);
-            onboarded = true;
             // Restore local storage flag since they already have a profile
             const AsyncStorage = require('@react-native-async-storage/async-storage').default;
             const { StorageKeys } = require('../constants');
             await AsyncStorage.setItem(StorageKeys.ONBOARDED, 'true');
           } else {
-            // Check onboarding status manually if no profile was immediately found
-            onboarded = await checkOnboardingStatus();
+            // User is authenticated but has no Firestore profile yet (needs onboarding).
+            // Set a minimal user so the navigator leaves the auth flow.
+            const firebaseUser = getCurrentUser();
+            setUser({
+              uid: userId,
+              email: firebaseUser?.email ?? '',
+              displayName: '',
+            });
+            setOnboarded(false);
           }
-          setOnboarded(onboarded);
         } catch (error) {
           console.error('Error loading user profile:', error);
+          // Even on error, set a minimal user so we don't stay stuck on Login.
+          const firebaseUser = getCurrentUser();
+          setUser({
+            uid: userId,
+            email: firebaseUser?.email ?? '',
+            displayName: '',
+          });
+          setOnboarded(false);
         }
       } else {
         setUser(null);

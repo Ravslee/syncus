@@ -37,6 +37,9 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       await signInWithEmail(email.trim(), password);
+      console.log("Login success!!");
+
+
     } catch (error: any) {
       const message =
         error.code === 'auth/user-not-found'

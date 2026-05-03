@@ -2,22 +2,23 @@
 // SyncUs - Result Screen (Reveal Together Gate)
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, BackHandler, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { CircularProgress } from '../components/CircularProgress';
 import { GradientButton } from '../components/GradientButton';
 import { GlassCard } from '../components/GlassCard';
 import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
-import { RootStackParamList, UserRoomStatus } from '../types';
-import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { RootStackParamList, UserRoomStatus, RoomStatus } from '../types';
+import { useRoomPresence } from '../hooks/useRoomPresence';
 import { useResults } from '../hooks/useResults';
+import { useRoom } from '../hooks/useRoom';
 import { useAppStore } from '../store/useAppStore';
+import { updateHeartbeat } from '../services/roomService';
 import { getCompatibilityLabel, getInsightText } from '../utils/formatters';
 import { CATEGORIES, SAMPLE_QUESTIONS } from '../constants';
-import { db } from '../services/firebase';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Result'>;
@@ -26,33 +27,79 @@ type Props = {
 
 export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
   const { roomId } = route.params;
-  const { partnerStatus } = usePartnerStatus(roomId);
+  const { partnerStatus } = useRoomPresence(roomId);
   const { results, loading, error, generateResults } = useResults(roomId);
-  const { user, room } = useAppStore();
+  useRoom(roomId);
+  const { user, room, partner, resetQuiz } = useAppStore();
   const [revealed, setRevealed] = useState(false);
-  const [partnerName, setPartnerName] = useState<string>('partner');
+  const [stalePartner, setStalePartner] = useState(false);
+  const partnerName = partner?.displayName ?? 'partner';
 
-  // Fetch partner name
+  // #6: Back button → go Home (prevents infinite loop with QuizScreen)
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        resetQuiz();
+        navigation.navigate('Home');
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [resetQuiz, navigation])
+  );
+
+  // #3: Partner left the room
   useEffect(() => {
-    const fetchPartner = async () => {
-      if (!room || !user) return;
-      const partnerId = room.users.find(id => id !== user.uid);
-      if (partnerId) {
-        try {
-          const pDoc = await db.users().doc(partnerId).get();
-          if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
-            setPartnerName(pDoc.data()?.displayName ?? 'partner');
-          }
-        } catch (e) {
-          console.error('Failed to fetch partner:', e);
-        }
-      }
-    };
-    fetchPartner();
-  }, [room, user]);
+    if (room?.status === RoomStatus.COMPLETED) {
+      Alert.alert(
+        'Partner Left',
+        'Your partner has left the room.',
+        [{ text: 'OK', onPress: () => { resetQuiz(); navigation.navigate('Home'); } }],
+        { cancelable: false },
+      );
+    }
+  }, [room?.status]);
+
+  // #1: Heartbeat
+  useEffect(() => {
+    if (!user || !room) return;
+    updateHeartbeat(room.id, user.uid);
+    const interval = setInterval(() => {
+      updateHeartbeat(room.id, user.uid);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user?.uid, room?.id]);
 
   const partnerCompleted =
     partnerStatus?.status === UserRoomStatus.COMPLETED;
+
+  // #5 & #1: Stale detection
+  useEffect(() => {
+    if (partnerCompleted || revealed) {
+      setStalePartner(false);
+      return;
+    }
+
+    const checkStale = () => {
+      if (partnerStatus?.lastActive) {
+        const diff = Date.now() - partnerStatus.lastActive;
+        if (diff > 60000) {
+          setStalePartner(true);
+        }
+      }
+    };
+
+    const interval = setInterval(checkStale, 10000);
+    const timeout = setTimeout(() => setStalePartner(true), 2 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [partnerCompleted, revealed, partnerStatus?.lastActive]);
+
+
+
 
   // Auto-calculate results when partner completes
   useEffect(() => {
@@ -84,6 +131,23 @@ export const ResultScreen: React.FC<Props> = ({ navigation, route }) => {
               </Text>
             </View>
           </GlassCard>
+
+          {stalePartner && (
+            <View style={{ marginTop: Spacing.xl, width: '100%', alignItems: 'center' }}>
+              <Text style={styles.staleText}>
+                Your partner seems to be offline.
+              </Text>
+              <GradientButton
+                title="Go Home"
+                variant="secondary"
+                onPress={() => {
+                  resetQuiz();
+                  navigation.navigate('Home');
+                }}
+                style={{ width: '100%' }}
+              />
+            </View>
+          )}
         </View>
       </ScreenWrapper>
     );
@@ -261,6 +325,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     marginTop: Spacing.base,
+  },
+  staleText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textMuted,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
+    fontFamily: Typography.fontFamily.regular,
   },
   // Error
   errorText: {

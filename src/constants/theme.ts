@@ -33,9 +33,9 @@ export const Colors = {
   glassHighlight: '#abc82a',
 
   // Text 
-  textPrimary: '#1a2417',   // White
-  textSecondary: '#FFFFFF', // White
-  textMuted: '#1a2417',     // Flame (as muted/secondary accent)
+  textPrimary: '#abc82a',   // White
+  textSecondary: '#1a2417', // White
+  textMuted: '#777',     // Flame (as muted/secondary accent)
   textAccent: '#abc82a',    // Flame
 
   // Status

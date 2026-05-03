@@ -5,30 +5,31 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, BackHandler, Animated } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { GradientButton } from '../components/GradientButton';
 import { SpinWheelModal } from '../components/SpinWheelModal';
-import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
-import { RootStackParamList, Category, UserRoomStatus } from '../types';
+import { Colors, Typography, Spacing, Shadows, BorderRadius } from '../constants/theme';
+import { RootStackParamList, Category, UserRoomStatus, RoomStatus } from '../types';
 import { CATEGORIES } from '../constants';
 import { updateRoomCategory } from '../services/roomService';
 import { useAppStore } from '../store/useAppStore';
-import { usePartnerStatus } from '../hooks/usePartnerStatus';
+import { useRoomPresence } from '../hooks/useRoomPresence';
 import { useRoom } from '../hooks/useRoom';
 import { db } from '../services/firebase';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { GlassCard } from '../components/GlassCard';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
 };
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  const { user, room, resetQuiz, leaveRoom } = useAppStore();
+  const { user, room, partner, myStatus, resetQuiz, leaveRoom } = useAppStore();
   useRoom(room?.id);
-  const { partnerStatus } = usePartnerStatus(room?.id);
+  const { partnerStatus } = useRoomPresence(room?.id);
   const [loading, setLoading] = useState(false);
-  const [partnerName, setPartnerName] = useState<string>('your partner');
+  const partnerName = partner?.displayName ?? 'your partner';
   const [menuVisible, setMenuVisible] = useState(false);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
@@ -45,25 +46,6 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     ).start();
   }, [pulseAnim]);
 
-  // Fetch partner name
-  React.useEffect(() => {
-    const fetchPartner = async () => {
-      if (!room || !user) return;
-      const partnerId = room.users.find(id => id !== user.uid);
-      if (partnerId) {
-        try {
-          const pDoc = await db.users().doc(partnerId).get();
-          if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
-            setPartnerName(pDoc.data()?.displayName ?? 'your partner');
-          }
-        } catch (e) {
-          console.error('Failed to fetch partner:', e);
-        }
-      }
-    };
-    fetchPartner();
-  }, [room, user]);
-
   // Reset quiz state when returning to this screen for a new quiz
   useFocusEffect(
     useCallback(() => {
@@ -77,14 +59,23 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       resetQuiz();
 
       // Update local state in Firestore so partner knows we are waiting
-      if (user && room) {
-        const stateId = `${room.id}__${user.uid}`;
-        db.roomStates().doc(stateId).update({
-          status: UserRoomStatus.JOINED,
-          currentQuestionIndex: 0,
-          completedAt: null,
-        }).catch(err => console.error('Failed to reset room state:', err));
-      }
+      const resetState = async () => {
+        if (user && room) {
+          try {
+            const stateId = `${room.id}__${user.uid}`;
+            await db.roomStates().doc(stateId).update({
+              status: UserRoomStatus.JOINED,
+              currentQuestionIndex: 0,
+              completedAt: null,
+            });
+            // Clear stale categoryId from previous round
+            await db.rooms().doc(room.id).update({ categoryId: '' });
+          } catch (err) {
+            console.error('Failed to reset room state:', err);
+          }
+        }
+      };
+      resetState();
 
       return () => {
         subscription.remove();
@@ -97,13 +88,46 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handlePlayClick = () => {
-    const isQuizLive =
-      partnerStatus?.status === UserRoomStatus.ANSWERING ||
-      partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
-      partnerStatus?.status === UserRoomStatus.GUESSING;
+  const isQuizLive =
+    partnerStatus?.status === UserRoomStatus.ANSWERING ||
+    partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
+    partnerStatus?.status === UserRoomStatus.GUESSING;
 
-    if (isQuizLive && room?.categoryId) {
+  const isMyQuizActive =
+    myStatus?.status === UserRoomStatus.ANSWERING ||
+    myStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
+    myStatus?.status === UserRoomStatus.GUESSING;
+
+  const canJoinQuiz = isQuizLive && room?.categoryId;
+  const isFocused = useIsFocused();
+
+  // If the partner starts a quiz while the spin wheel is open, close it and show the join modal
+  React.useEffect(() => {
+    if (canJoinQuiz && showSpinWheel) {
+      setShowSpinWheel(false);
+      setShowPartnerModal(true);
+    }
+  }, [canJoinQuiz, showSpinWheel]);
+
+  // #3: Partner left room detection
+  React.useEffect(() => {
+    if (room?.status === RoomStatus.COMPLETED && room?.users.length < 2 && isFocused) {
+      Alert.alert(
+        'Room Closed',
+        'Your partner has left the room. Moving you back to Lobby.',
+        [{
+          text: 'OK', onPress: () => {
+            resetQuiz();
+            if (user && room) leaveRoom(room.id, user.uid);
+            navigation.replace('Lobby');
+          }
+        }]
+      );
+    }
+  }, [room?.status, room?.users.length, isFocused]);
+
+  const handlePlayClick = () => {
+    if (canJoinQuiz) {
       setShowPartnerModal(true);
     } else {
       setShowSpinWheel(true);
@@ -135,7 +159,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const handleJoinQuiz = async () => {
     setShowPartnerModal(false);
     if (!room || !user || !room.categoryId) return;
-    
+
     setLoading(true);
     try {
       const { clearRoomAnswers, updateProgress } = await import('../services/quizService');
@@ -257,6 +281,28 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           </View>
 
+          {/* Ongoing Quiz Resume Section */}
+          {isMyQuizActive && room?.categoryId && (
+            <GlassCard style={styles.resumeCard}>
+              <View style={styles.resumeInfo}>
+                <View style={styles.resumeIcon}>
+                  <Icon name="play-circle" size={32} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.resumeTitle}>Quiz in Progress</Text>
+                  <Text style={styles.resumeSubtitle}>
+                    You were in the middle of a {CATEGORIES.find(c => c.id === room.categoryId)?.name} session.
+                  </Text>
+                </View>
+              </View>
+              <GradientButton
+                title="Resume Quiz"
+                onPress={() => navigation.navigate('Quiz', { roomId: room.id, categoryId: room.categoryId })}
+                style={styles.resumeButton}
+              />
+            </GlassCard>
+          )}
+
           {/* Play Button */}
           <View style={styles.playContainer}>
             <Animated.View
@@ -288,7 +334,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <Icon name="play" size={56} color={Colors.primaryDark} style={{ marginLeft: 6 }} />
               </View>
             </TouchableOpacity>
-            <Text style={styles.playHintText}>Tap to Spin</Text>
+            <Text style={styles.playHintText}>{canJoinQuiz ? "Tap to Join" : "Tap to Spin"}</Text>
           </View>
         </View>
       </View>
@@ -303,6 +349,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Spacing.base,
     marginBottom: Spacing.md,
+  },
+  resumeCard: {
+    width: '90%',
+    marginTop: -Spacing.lg,
+    marginBottom: Spacing.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  resumeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    gap: Spacing.base,
+  },
+  resumeIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary + '10',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resumeTitle: {
+    fontSize: Typography.fontSize.md,
+    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  resumeSubtitle: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
+  },
+  resumeButton: {
+    height: 48,
   },
   appBadge: {
     fontSize: Typography.fontSize['2xl'],
@@ -364,7 +445,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: Typography.fontSize.lg,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     marginBottom: Spacing['3xl'],
     lineHeight: 26,
     fontFamily: Typography.fontFamily.regular,
@@ -399,7 +480,7 @@ const styles = StyleSheet.create({
   avatarLabel: {
     marginTop: Spacing.sm,
     fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   connectionLine: {
@@ -475,7 +556,7 @@ const styles = StyleSheet.create({
   partnerModalSubtitle: {
     fontSize: Typography.fontSize.base,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xl,
     textAlign: 'center',
   },
@@ -484,7 +565,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
-    borderRadius: Spacing.full,
+    borderRadius: BorderRadius.full,
   },
   categoryBadgeIcon: {
     fontSize: 24,

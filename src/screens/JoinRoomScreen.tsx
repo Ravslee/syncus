@@ -104,13 +104,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.primaryLight,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     textAlign: 'center',
     marginBottom: Spacing['2xl'],
     lineHeight: 22,

@@ -142,6 +142,50 @@ export const useQuiz = (roomId: string, categoryId: string) => {
      nextQuestion();
   }, [nextQuestion]);
 
+  const syncAllAnswers = useCallback(async () => {
+    if (!user || !room) return;
+    const roundId = room.currentRoundId || 'legacy_round';
+    
+    const allAnswers: Answer[] = Object.entries(answers).map(([questionId, option]) => ({
+      roomId,
+      roundId,
+      userId: user.uid,
+      questionId,
+      categoryId,
+      selectedOption: option,
+      createdAt: Date.now(),
+    }));
+
+    if (allAnswers.length > 0) {
+      await batchSubmitAnswers(allAnswers);
+    }
+    
+    // Update progress to where we are
+    const status = currentQuestionIndex >= questions.length 
+      ? UserRoomStatus.WAITING_FOR_PARTNER 
+      : UserRoomStatus.ANSWERING;
+      
+    await updateProgress(roomId, user.uid, Math.min(currentQuestionIndex, questions.length), status);
+  }, [user, room, roomId, categoryId, answers, currentQuestionIndex, questions.length]);
+
+  const syncAllGuesses = useCallback(async () => {
+    if (!user || !room) return;
+    const roundId = room.currentRoundId || 'legacy_round';
+    
+    // For guesses, we update each answer doc
+    const guessPromises = Object.entries(guesses).map(([questionId, option]) => 
+      submitGuess(roomId, user.uid, questionId, option, roundId, categoryId)
+    );
+    
+    await Promise.all(guessPromises);
+    
+    if (currentQuestionIndex >= questions.length) {
+      await markCompleted(roomId, user.uid);
+    } else {
+      await updateProgress(roomId, user.uid, currentQuestionIndex, UserRoomStatus.GUESSING);
+    }
+  }, [user, room, roomId, categoryId, guesses, currentQuestionIndex, questions.length]);
+
   return {
     quizPhase,
     currentQuestion,
@@ -154,5 +198,7 @@ export const useQuiz = (roomId: string, categoryId: string) => {
     handleAnswer,
     handleGuess,
     handleNext,
+    syncAllAnswers,
+    syncAllGuesses,
   };
 };

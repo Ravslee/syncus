@@ -2,15 +2,15 @@
 // SyncUs - Code Input Component
 // ============================================================
 
-import React, {useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   TextInput,
   StyleSheet,
   Keyboard,
 } from 'react-native';
-import {Colors, BorderRadius, Typography} from '../constants/theme';
-import {ROOM_CODE_LENGTH} from '../constants';
+import { Colors, BorderRadius, Typography } from '../constants/theme';
+import { ROOM_CODE_LENGTH } from '../constants';
 
 interface CodeInputProps {
   value: string;
@@ -70,7 +70,7 @@ export const CodeInput: React.FC<CodeInputProps> = ({
 
   return (
     <View style={styles.container}>
-      {Array.from({length: ROOM_CODE_LENGTH}).map((_, index) => (
+      {Array.from({ length: ROOM_CODE_LENGTH }).map((_, index) => (
         <TextInput
           key={index}
           ref={ref => {
@@ -83,7 +83,7 @@ export const CodeInput: React.FC<CodeInputProps> = ({
           ]}
           value={value[index] || ''}
           onChangeText={text => handleChange(text, index)}
-          onKeyPress={({nativeEvent}) =>
+          onKeyPress={({ nativeEvent }) =>
             handleKeyPress(nativeEvent.key, index)
           }
           onFocus={() => setFocusedIndex(index)}
@@ -92,7 +92,7 @@ export const CodeInput: React.FC<CodeInputProps> = ({
           autoCapitalize="characters"
           textAlign="center"
           selectionColor={Colors.primary}
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={Colors.textAccent}
         />
       ))}
     </View>

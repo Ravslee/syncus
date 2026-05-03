@@ -45,6 +45,7 @@ export interface RoomState {
   status: UserRoomStatus;
   currentQuestionIndex: number;
   completedAt: number | null;
+  lastActive?: number;
 }
 
 export interface Category {
@@ -150,6 +151,8 @@ export interface AppState {
   setPartner: (partner: User | null) => void;
   partnerStatus: RoomState | null;
   setPartnerStatus: (status: RoomState | null) => void;
+  myStatus: RoomState | null;
+  setMyStatus: (status: RoomState | null) => void;
 
   // Results
   results: Result | null;

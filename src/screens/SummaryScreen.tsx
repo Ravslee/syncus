@@ -2,10 +2,10 @@
 // SyncUs - Summary Screen
 // ============================================================
 
-import React from 'react';
-import { View, Text, StyleSheet, Share } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, Share, BackHandler } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { CircularProgress } from '../components/CircularProgress';
 import { GradientButton } from '../components/GradientButton';
@@ -25,6 +25,19 @@ type Props = {
 export const SummaryScreen: React.FC<Props> = ({ navigation, route }) => {
   const { results, resetQuiz, user, partner } = useAppStore();
   const partnerName = partner?.displayName ?? 'Partner';
+
+  // #6: Back button → go Home
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        resetQuiz();
+        navigation.navigate('Home');
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [resetQuiz, navigation])
+  );
 
   if (!results) {
     return (

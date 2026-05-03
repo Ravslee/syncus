@@ -2,9 +2,10 @@
 // SyncUs - Create Room Screen
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Share, Alert, ActivityIndicator, TouchableOpacity, Clipboard } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Share, Alert, ActivityIndicator, TouchableOpacity, Clipboard, BackHandler } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { GradientButton } from '../components/GradientButton';
 import { GlassCard } from '../components/GlassCard';
@@ -18,7 +19,7 @@ type Props = {
 };
 
 export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
-  const { user, resetQuiz } = useAppStore();
+  const { user, resetQuiz, leaveRoom } = useAppStore();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,26 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
     return () => unsubscribe();
   }, [roomId, navigation]);
 
+  const handleCancelRoom = async () => {
+    if (roomId && user) {
+      await leaveRoom(roomId, user.uid);
+    }
+    navigation.goBack();
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        handleCancelRoom();
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [roomId, user])
+  );
+
   const handleShareCode = async () => {
     try {
       await Share.share({
@@ -98,6 +119,11 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScreenWrapper>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleCancelRoom} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} color={Colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.container}>
         <Text style={styles.title}>Room Created!</Text>
         <Text style={styles.subtitle}>
@@ -116,7 +142,7 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
               }}
               style={styles.copyButton}
             >
-              <Icon name="copy" size={18} color={Colors.textPrimary} />
+              <Icon name="copy" size={24} color={Colors.primaryLight} />
             </TouchableOpacity>
           </View>
         </GlassCard>
@@ -142,6 +168,19 @@ export const CreateRoomScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    paddingTop: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    width: '100%',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -157,13 +196,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['2xl'],
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.primaryLight,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
+    color: Colors.textAccent,
     textAlign: 'center',
     marginBottom: Spacing['2xl'],
   },
@@ -177,7 +216,7 @@ const styles = StyleSheet.create({
   codeLabel: {
     fontSize: Typography.fontSize.xs,
     fontWeight: '700',
-    color: Colors.textMuted,
+    color: Colors.textAccent,
     letterSpacing: 2,
     marginBottom: Spacing.base,
   },
@@ -189,7 +228,7 @@ const styles = StyleSheet.create({
   codeText: {
     fontSize: 32,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.textAccent,
     letterSpacing: 8,
   },
   copyButton: {
