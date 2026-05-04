@@ -75,7 +75,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       questions: [],
       answers: {},
       guesses: {},
-      partner: null,
       results: null,
     }),
 

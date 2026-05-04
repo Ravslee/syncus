@@ -88,17 +88,13 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const isQuizLive =
-    partnerStatus?.status === UserRoomStatus.ANSWERING ||
-    partnerStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
-    partnerStatus?.status === UserRoomStatus.GUESSING;
 
   const isMyQuizActive =
     myStatus?.status === UserRoomStatus.ANSWERING ||
     myStatus?.status === UserRoomStatus.WAITING_FOR_PARTNER ||
     myStatus?.status === UserRoomStatus.GUESSING;
 
-  const canJoinQuiz = isQuizLive && room?.categoryId;
+  const canJoinQuiz = !!room?.categoryId;
   const isFocused = useIsFocused();
 
   // If the partner starts a quiz while the spin wheel is open, close it and show the join modal
@@ -144,13 +140,19 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
     setLoading(true);
     try {
+      // 1. Lock the category in the room immediately to notify partner
+      await updateRoomCategory(room.id, category.id);
+
       const { clearRoomAnswers, updateProgress } = await import('../services/quizService');
+      
+      // 2. Clear old answers and update our own progress
       await clearRoomAnswers(room.id, user.uid, category.id);
       await updateProgress(room.id, user.uid, 0, UserRoomStatus.ANSWERING);
-      await updateRoomCategory(room.id, category.id);
+      
       navigation.navigate('Quiz', { roomId: room.id, categoryId: category.id });
     } catch (error) {
       console.error('Failed to set category:', error);
+      Alert.alert('Error', 'This category might have already been selected by your partner.');
     } finally {
       setLoading(false);
     }

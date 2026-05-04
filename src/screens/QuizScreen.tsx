@@ -154,9 +154,20 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
   // Load questions
   useEffect(() => {
     const loadQuestions = async () => {
+      if (!categoryId) {
+        setLoading(false);
+        return;
+      }
+      // If questions already exist (e.g. from resume), just stop loading
+      if (questions.length > 0) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const qs = await fetchQuestions(categoryId);
         setQuestions(qs);
+        console.log('Questions loaded:', qs.length);
       } catch (error) {
         console.error('Failed to load questions:', error);
       } finally {
@@ -164,9 +175,9 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
       }
     };
     loadQuestions();
-  }, [categoryId, setQuestions]);
+  }, [categoryId, setQuestions, questions.length]);
 
-  const isWaitState = quizPhase === 1 && currentQuestionIndex >= totalQuestions;
+  const isWaitState = quizPhase === 1 && totalQuestions > 0 && currentQuestionIndex >= totalQuestions;
 
   // #5 & #1: Timeout & Stale detection on waiting-for-partner screen
   useEffect(() => {
@@ -298,6 +309,27 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
+  // Fallback if no questions were found
+  if (totalQuestions === 0) {
+    return (
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <Text style={{ fontSize: 56, marginBottom: Spacing.xl }}>🧐</Text>
+          <Text style={styles.waitingTitle}>No Questions Found</Text>
+          <Text style={styles.loadingText}>
+            We couldn't find any questions for this category.
+          </Text>
+          <View style={{ marginTop: Spacing['3xl'], width: '100%' }}>
+            <GradientButton
+              title="Go Back"
+              onPress={() => navigation.goBack()}
+            />
+          </View>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
   // Intermediate waiting screen between phases
   if (isWaitState) {
     if (readyToGuess) {
@@ -353,7 +385,7 @@ export const QuizScreen: React.FC<Props> = ({ navigation, route }) => {
             Waiting for {partnerName} to finish Phase 1...
           </Text>
           <GlassCard style={{ marginTop: Spacing.xl, padding: Spacing.lg }}>
-            <Text style={{ color: Colors.textSecondary, textAlign: 'center' }}>
+            <Text style={{ color: Colors.textPrimary, textAlign: 'center' }}>
               Once they're done, the real game begins. You will have to guess what
               they answered!
             </Text>
@@ -568,7 +600,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     marginTop: Spacing.base,
     fontFamily: Typography.fontFamily.regular,
     textAlign: 'center',

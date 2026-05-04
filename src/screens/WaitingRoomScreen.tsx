@@ -9,7 +9,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { GlassCard } from '../components/GlassCard';
 import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
-import { RootStackParamList, RoomStatus } from '../types';
+import { RootStackParamList, RoomStatus, User } from '../types';
 import { useRoom } from '../hooks/useRoom';
 import { useAppStore } from '../store/useAppStore';
 import { db } from '../services/firebase';
@@ -35,8 +35,11 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
       if (partnerId && !partner) {
         try {
           const pDoc = await db.users().doc(partnerId).get();
+          console.log('Partner Data: ', pDoc.data());
           if (typeof pDoc.exists === 'function' ? pDoc.exists() : pDoc.exists) {
-            setPartner(pDoc.data() as any);
+            setPartner({ uid: partnerId, ...pDoc.data() } as User);
+
+            console.log('Partner Data after set to store: ', { uid: partnerId, ...pDoc.data() });
           }
         } catch (e) {
           console.error('Failed to fetch partner:', e);
@@ -44,6 +47,7 @@ export const WaitingRoomScreen: React.FC<Props> = ({ navigation, route }) => {
       }
     };
     fetchPartner();
+    // console.log('Partner Data: ', partner);
   }, [room, user, partner, setPartner]);
 
   // Navigate when both users are ready
